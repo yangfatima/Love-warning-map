@@ -2,656 +2,683 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>全球恋爱避雷地图 · Love Danger Zone</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>💔 全球恋爱避雷地图</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/globe.gl@2.27.2/dist/globe.gl.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500&display=swap');
-  :root{--deep:#020b18;--cyan:#00d4ff;--pink:#ff4d8d;--purple:#b44dff;--gold:#ffd700;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--deep);font-family:'Noto Sans SC',sans-serif;overflow:hidden;height:100vh;width:100vw;cursor:crosshair;}
-  #starfield{position:fixed;inset:0;z-index:0;pointer-events:none;}
-  .scanlines{position:fixed;inset:0;z-index:50;pointer-events:none;background:repeating-linear-gradient(to bottom,transparent 0,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);}
-  .corner{position:fixed;width:44px;height:44px;z-index:100;pointer-events:none;}
-  .corner::before,.corner::after{content:'';position:absolute;background:rgba(0,212,255,0.55);}
-  .corner::before{width:2px;height:100%;}.corner::after{width:100%;height:2px;}
-  .tl{top:14px;left:14px;}.tr{top:14px;right:14px;transform:scaleX(-1);}
-  .bl{bottom:14px;left:14px;transform:scaleY(-1);}.br{bottom:14px;right:14px;transform:scale(-1);}
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap');
 
-  /* TITLE */
-  .title{position:fixed;top:22px;left:50%;transform:translateX(-50%);z-index:100;text-align:center;pointer-events:none;}
-  .title h1{font-family:'Orbitron',sans-serif;font-size:clamp(12px,2vw,21px);font-weight:900;color:var(--cyan);letter-spacing:6px;text-shadow:0 0 20px var(--cyan),0 0 50px rgba(0,212,255,0.3);white-space:nowrap;}
-  .title p{font-size:10px;color:rgba(0,212,255,0.4);letter-spacing:3px;margin-top:3px;}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* STATS */
-  .stats-bar{position:fixed;top:22px;left:22px;z-index:100;display:flex;flex-direction:column;gap:7px;}
-  .stat-item{display:flex;align-items:center;gap:7px;font-size:11px;color:rgba(0,212,255,0.65);letter-spacing:1px;}
-  .stat-dot{width:6px;height:6px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--pink);animation:pulse 2s infinite;}
-  .stat-dot.live{background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
-  .stat-num{font-family:'Orbitron',sans-serif;font-size:13px;color:#fff;}
+  :root {
+    --bg: #000510;
+    --glass: rgba(255,255,255,0.04);
+    --glass-border: rgba(0,150,255,0.2);
+    --blue: #0096ff;
+    --blue-dim: rgba(0,150,255,0.15);
+    --red: #ff3d3d;
+    --orange: #ff7c1f;
+    --yellow: #ffd23f;
+    --white-dim: rgba(255,255,255,0.4);
+  }
 
-  /* LEGEND */
-  .legend{position:fixed;top:22px;right:22px;z-index:100;display:flex;flex-direction:column;gap:6px;}
-  .legend-item{display:flex;align-items:center;gap:7px;font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:1px;}
-  .legend-dot{width:8px;height:8px;border-radius:50%;}
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    overflow: hidden;
+    font-family: 'Noto Sans SC', sans-serif;
+    color: #fff;
+  }
 
-  /* MAP */
-  #map-container{position:fixed;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-  #map-wrapper{width:90vw;max-width:1300px;transform-origin:center center;will-change:transform;cursor:grab;}
-  #map-wrapper:active{cursor:grabbing;}
-  #map-wrapper.smooth{transition:transform 1s cubic-bezier(0.25,0.46,0.45,0.94);}
-  #world-svg{width:100%;height:auto;display:block;filter:drop-shadow(0 0 30px rgba(0,100,200,0.3));}
+  #globe-container {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
 
-  /* ZOOM CONTROLS */
-  .zoom-controls{position:fixed;bottom:30px;left:30px;z-index:100;display:flex;flex-direction:column;gap:6px;}
-  .zoom-btn{width:34px;height:34px;border-radius:8px;border:1px solid rgba(0,212,255,0.3);background:rgba(0,20,50,0.85);color:rgba(0,212,255,0.8);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;backdrop-filter:blur(8px);}
-  .zoom-btn:hover{border-color:rgba(0,212,255,0.8);color:#fff;box-shadow:0 0 14px rgba(0,212,255,0.3);}
+  /* ── DASHBOARD (top-left) ── */
+  #dashboard {
+    position: fixed; top: 20px; left: 20px;
+    background: var(--glass);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 18px 24px;
+    min-width: 220px;
+    box-shadow: 0 8px 32px rgba(0,150,255,0.1), inset 0 1px 0 rgba(255,255,255,0.06);
+    z-index: 10;
+  }
+  #dashboard .label {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--blue); opacity: 0.7; margin-bottom: 4px;
+  }
+  #dashboard .value {
+    font-family: 'Orbitron', monospace;
+    font-size: 28px; font-weight: 700;
+    background: linear-gradient(135deg, #fff 40%, var(--blue));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+  }
+  #dashboard .sub-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px; font-weight: 400; color: var(--orange);
+    margin-top: 6px;
+  }
+  #dashboard .divider { height: 1px; background: var(--glass-border); margin: 12px 0; }
+  #dashboard .today-label { font-size: 10px; letter-spacing: 2px; color: var(--orange); opacity: 0.7; margin-bottom: 2px; }
 
-  /* DANMU CANVAS */
-  #danmu-canvas{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden;}
-  .danmu{position:absolute;white-space:nowrap;font-size:11px;letter-spacing:1.5px;color:rgba(0,212,255,0.55);border:1px solid rgba(0,212,255,0.18);background:rgba(0,12,35,0.55);padding:4px 12px;border-radius:20px;backdrop-filter:blur(4px);pointer-events:none;}
-  .danmu.pink{color:rgba(255,100,150,0.72);border-color:rgba(255,77,141,0.25);}
-  .danmu.gold{color:rgba(255,210,0,0.65);border-color:rgba(255,215,0,0.2);}
-  .danmu.vert{writing-mode:vertical-rl;font-size:10px;padding:10px 4px;letter-spacing:2.5px;}
+  /* ── LEGEND (top-right) ── */
+  #legend {
+    position: fixed; top: 20px; right: 20px;
+    background: var(--glass);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 16px 20px;
+    z-index: 10;
+    box-shadow: 0 8px 32px rgba(0,150,255,0.1), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  #legend h3 { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; color: rgba(255,255,255,0.8); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-red { background: var(--red); box-shadow: 0 0 8px var(--red); animation: pulse-red 0.8s ease-in-out infinite; }
+  .dot-orange { background: var(--orange); box-shadow: 0 0 6px var(--orange); animation: pulse-red 1.4s ease-in-out infinite; }
+  .dot-yellow { background: var(--yellow); box-shadow: 0 0 4px var(--yellow); animation: pulse-red 2.5s ease-in-out infinite; }
+  .dot-white { background: rgba(255,255,255,0.4); }
+  @keyframes pulse-red { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
 
-  /* SHARE */
-  .share-btn{position:fixed;bottom:30px;right:30px;z-index:100;cursor:pointer;}
-  .share-inner{display:inline-flex;align-items:center;gap:10px;padding:12px 22px;border:1px solid rgba(0,212,255,0.4);border-radius:30px;background:rgba(0,20,52,0.88);backdrop-filter:blur(12px);transition:all 0.3s;}
-  .share-btn:hover .share-inner{border-color:rgba(0,212,255,0.9);box-shadow:0 0 24px rgba(0,212,255,0.35);transform:translateY(-2px);}
-  .share-icon{font-size:16px;animation:pulse 2s infinite;}
-  .share-text{font-size:13px;color:var(--cyan);letter-spacing:1.5px;font-weight:500;text-shadow:0 0 10px rgba(0,212,255,0.5);}
+  /* ── FAB BUTTON (bottom-right) ── */
+  #fab {
+    position: fixed; bottom: 30px; right: 24px;
+    background: linear-gradient(135deg, #ff4e6a, #ff7c1f);
+    border: none; border-radius: 50px;
+    padding: 14px 22px;
+    color: #fff; font-size: 13px; font-weight: 500;
+    font-family: 'Noto Sans SC', sans-serif;
+    cursor: pointer; z-index: 10;
+    box-shadow: 0 4px 24px rgba(255,78,106,0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+  }
+  #fab:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 32px rgba(255,78,106,0.7); }
+  #fab:active { transform: scale(0.97); }
 
-  /* MODAL */
-  .modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,6,22,0.9);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.35s;}
-  .modal-overlay.active{opacity:1;pointer-events:all;}
-  .modal{background:linear-gradient(145deg,rgba(4,16,44,0.99),rgba(2,8,26,0.99));border:1px solid rgba(0,212,255,0.25);border-radius:22px;padding:34px;width:min(92vw,480px);max-height:90vh;overflow-y:auto;box-shadow:0 0 60px rgba(0,70,200,0.18);transform:scale(0.88) translateY(16px);transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);}
-  .modal-overlay.active .modal{transform:scale(1) translateY(0);}
-  .modal-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;}
-  .modal-title{font-family:'Orbitron',sans-serif;font-size:14px;color:var(--cyan);letter-spacing:3px;}
-  .modal-sub{font-size:10px;color:rgba(255,255,255,0.32);letter-spacing:1px;margin-top:4px;}
-  .modal-x{width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;}
-  .modal-x:hover{border-color:var(--pink);color:var(--pink);}
-  .fsec{margin-bottom:18px;}
-  .flbl{font-size:10px;color:rgba(0,212,255,0.6);letter-spacing:2px;margin-bottom:8px;display:block;text-transform:uppercase;}
-  .ggroup{display:flex;gap:10px;}
-  .gbtn{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.4);font-size:13px;cursor:pointer;transition:all 0.2s;letter-spacing:2px;font-family:'Noto Sans SC',sans-serif;}
-  .gbtn:hover{border-color:rgba(0,212,255,0.4);color:rgba(255,255,255,0.8);}
-  .gbtn.sel{border-color:var(--pink);background:rgba(255,77,141,0.1);color:var(--pink);}
-  .egrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
-  .ebtn{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.4);font-size:12px;cursor:pointer;transition:all 0.2s;letter-spacing:1px;font-family:'Noto Sans SC',sans-serif;}
-  .ebtn:hover{border-color:rgba(180,77,255,0.4);color:rgba(255,255,255,0.8);}
-  .ebtn.sel{border-color:var(--purple);background:rgba(180,77,255,0.1);color:var(--purple);}
-  .fsel{width:100%;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(2,10,34,0.9);color:rgba(255,255,255,0.8);font-size:13px;font-family:'Noto Sans SC',sans-serif;cursor:pointer;outline:none;transition:all 0.2s;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300d4ff' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
-  .fsel:focus{border-color:rgba(0,212,255,0.5);}
-  .fsel option{background:#030d1f;}
-  .subbtn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#0a4fa8,#0066cc);color:#fff;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;cursor:pointer;transition:all 0.3s;margin-top:22px;overflow:hidden;position:relative;}
-  .subbtn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);transition:left 0.4s;}
-  .subbtn:hover{box-shadow:0 0 28px rgba(0,100,255,0.5);transform:translateY(-1px);}
-  .subbtn:hover::before{left:100%;}
+  /* ── MODAL OVERLAY ── */
+  #modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,5,16,0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 100;
+    display: none; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  #modal-overlay.open { display: flex; }
 
-  /* NOTIFICATION */
-  .notif{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(14px);background:rgba(0,20,52,0.94);border:1px solid rgba(0,212,255,0.4);border-radius:20px;padding:9px 22px;font-size:12px;color:var(--cyan);letter-spacing:1.5px;z-index:200;opacity:0;transition:all 0.4s;pointer-events:none;white-space:nowrap;}
-  .notif.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  #modal {
+    background: #fff;
+    border-radius: 20px;
+    padding: 32px;
+    width: 100%; max-width: 440px;
+    color: #111;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    animation: modal-in 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    max-height: 90vh; overflow-y: auto;
+  }
+  @keyframes modal-in { from { opacity:0; transform:scale(0.85) translateY(20px); } to { opacity:1; transform:none; } }
 
-  /* TOOLTIP */
-  .tip{position:fixed;background:rgba(0,12,40,0.97);border:1px solid rgba(0,212,255,0.28);border-radius:8px;padding:7px 13px;font-size:11px;color:var(--cyan);letter-spacing:1px;pointer-events:none;z-index:500;opacity:0;transition:opacity 0.2s;white-space:nowrap;}
+  #modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  #modal .modal-sub { font-size: 13px; color: #666; margin-bottom: 24px; }
 
-  /* ZOOM HINT */
-  .zhint{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(0,212,255,0.3);letter-spacing:2px;z-index:100;pointer-events:none;transition:opacity 1s;}
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 500; color: #444; margin-bottom: 8px; letter-spacing: 0.5px; }
 
-  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.45;transform:scale(0.8);}}
+  .radio-group { display: flex; gap: 10px; flex-wrap: wrap; }
+  .radio-btn { flex: 1; min-width: 80px; background: #f4f4f6; border: 2px solid transparent; border-radius: 10px; padding: 10px; text-align: center; font-size: 13px; cursor: pointer; transition: all 0.15s; user-select: none; }
+  .radio-btn:hover { border-color: #ddd; }
+  .radio-btn.selected { background: #fff0f3; border-color: #ff4e6a; color: #ff4e6a; font-weight: 600; }
+
+  .chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { background: #f4f4f6; border: 2px solid transparent; border-radius: 20px; padding: 7px 14px; font-size: 12px; cursor: pointer; transition: all 0.15s; user-select: none; white-space: nowrap; }
+  .chip:hover { border-color: #ddd; }
+  .chip.selected { background: #fff3e8; border-color: var(--orange); color: var(--orange); font-weight: 600; }
+
+  select, input[type="text"] {
+    width: 100%; padding: 11px 14px; border: 2px solid #eee; border-radius: 10px;
+    font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.15s;
+    background: #fafafa; color: #111;
+  }
+  select:focus, input[type="text"]:focus { border-color: #0096ff; background: #fff; }
+
+  .modal-footer { display: flex; gap: 12px; margin-top: 24px; }
+  .btn-cancel { flex: 1; padding: 13px; border: 2px solid #eee; background: transparent; border-radius: 10px; font-size: 14px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .btn-cancel:hover { border-color: #ccc; }
+  .btn-submit { flex: 2; padding: 13px; background: linear-gradient(135deg, #ff4e6a, #ff7c1f); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(30,30,40,0.95); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 12px 24px; font-size: 13px; color: #fff;
+    z-index: 200; opacity: 0; transition: all 0.4s; pointer-events: none; white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── RIPPLE CANVAS ── */
+  #ripple-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+
+  /* mobile */
+  @media (max-width: 480px) {
+    #dashboard { top: 10px; left: 10px; padding: 12px 16px; min-width: 160px; }
+    #dashboard .value { font-size: 20px; }
+    #legend { top: 10px; right: 10px; padding: 12px 14px; }
+    #fab { bottom: 20px; right: 12px; font-size: 12px; padding: 12px 16px; }
+    #modal { padding: 24px 20px; }
+  }
 </style>
 </head>
 <body>
 
-<canvas id="starfield"></canvas>
-<div class="scanlines"></div>
-<div class="corner tl"></div><div class="corner tr"></div>
-<div class="corner bl"></div><div class="corner br"></div>
-<div id="danmu-canvas"></div>
+<div id="globe-container"></div>
+<canvas id="ripple-canvas"></canvas>
 
-<div class="title">
-  <h1>⚡ LOVE DANGER ZONE ⚡</h1>
-  <p>全球恋爱避雷地图 · GLOBAL WARNING SYSTEM</p>
+<!-- Dashboard -->
+<div id="dashboard">
+  <div class="label">💔 全球避雷投票总数</div>
+  <div class="value" id="total-count">0</div>
+  <div class="divider"></div>
+  <div class="today-label">🔥 今日新增避雷</div>
+  <div class="sub-value" id="today-count">+0</div>
 </div>
 
-<div class="stats-bar">
-  <div class="stat-item"><div class="stat-dot"></div><span>实时避雷数据</span></div>
-  <div class="stat-item"><div class="stat-dot live"></div><span>全球投票 <span class="stat-num" id="total-count">2847</span></span></div>
-  <div class="stat-item"><div class="stat-dot"></div><span>今日新增 <span class="stat-num" id="today-count">138</span></span></div>
+<!-- Legend -->
+<div id="legend">
+  <h3>⚡ 风险预警标准</h3>
+  <div class="legend-item"><div class="legend-dot dot-red"></div><span>🔴 高危区域 (强闪烁)</span></div>
+  <div class="legend-item"><div class="legend-dot dot-orange"></div><span>🟠 中度预警 (中度闪烁)</span></div>
+  <div class="legend-item"><div class="legend-dot dot-yellow"></div><span>🟡 轻度风险 (微弱闪烁)</span></div>
+  <div class="legend-item"><div class="legend-dot dot-white"></div><span>⚪ 数据稀少 (静止微光)</span></div>
 </div>
 
-<div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:#ff4d8d;box-shadow:0 0 7px #ff4d8d"></div><span>高危区域</span></div>
-  <div class="legend-item"><div class="legend-dot" style="background:#ff9500;box-shadow:0 0 7px #ff9500"></div><span>中度预警</span></div>
-  <div class="legend-item"><div class="legend-dot" style="background:#ffd700;box-shadow:0 0 7px #ffd700"></div><span>轻度风险</span></div>
-  <div class="legend-item"><div class="legend-dot" style="background:#00d4ff;box-shadow:0 0 7px #00d4ff"></div><span>数据稀少</span></div>
-  <div class="legend-item" style="margin-top:5px;color:rgba(0,212,255,0.3);font-size:9px;">滚轮缩放 · 拖拽平移</div>
-</div>
+<!-- FAB -->
+<button id="fab">✨ 分享你的恋爱避雷坐标</button>
 
-<div id="map-container">
-  <div id="map-wrapper">
-    <svg id="world-svg" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="bg" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#051a3d"/>
-          <stop offset="70%" stop-color="#020b18"/>
-          <stop offset="100%" stop-color="#010509"/>
-        </radialGradient>
-        <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="3" result="b"/>
-          <feComposite in="SourceGraphic" in2="b" operator="over"/>
-        </filter>
-        <filter id="sglow" x="-120%" y="-120%" width="340%" height="340%">
-          <feGaussianBlur stdDeviation="8" result="b"/>
-          <feComposite in="SourceGraphic" in2="b" operator="over"/>
-        </filter>
-        <filter id="mglow" x="-250%" y="-250%" width="600%" height="600%">
-          <feGaussianBlur stdDeviation="18" result="b"/>
-          <feComposite in="SourceGraphic" in2="b" operator="over"/>
-        </filter>
-      </defs>
-      <rect width="1000" height="500" fill="url(#bg)" rx="8"/>
-      <g opacity="0.065" stroke="#00d4ff" stroke-width="0.5" fill="none">
-        <line x1="0" y1="83" x2="1000" y2="83"/><line x1="0" y1="166" x2="1000" y2="166"/>
-        <line x1="0" y1="250" x2="1000" y2="250"/><line x1="0" y1="333" x2="1000" y2="333"/>
-        <line x1="0" y1="416" x2="1000" y2="416"/>
-        <line x1="111" y1="0" x2="111" y2="500"/><line x1="222" y1="0" x2="222" y2="500"/>
-        <line x1="333" y1="0" x2="333" y2="500"/><line x1="444" y1="0" x2="444" y2="500"/>
-        <line x1="556" y1="0" x2="556" y2="500"/><line x1="667" y1="0" x2="667" y2="500"/>
-        <line x1="778" y1="0" x2="778" y2="500"/><line x1="889" y1="0" x2="889" y2="500"/>
-      </g>
-      <g id="countries" fill="rgba(5,30,80,0.72)" stroke="#1a5fa8" stroke-width="0.7" stroke-linejoin="round">
-        <path class="country" data-country="美国"       d="M155,120 L270,100 L290,115 L285,145 L260,160 L250,180 L225,185 L200,175 L175,165 L160,150 Z"/>
-        <path class="country" data-country="加拿大"     d="M130,60 L290,50 L295,100 L270,100 L155,120 L140,95 L125,80 Z"/>
-        <path class="country" data-country="墨西哥"     d="M170,185 L225,185 L235,215 L210,225 L185,220 L165,205 Z"/>
-        <path class="country" data-country="巴西"       d="M245,230 L310,225 L325,270 L310,320 L280,345 L255,330 L240,300 L235,265 Z"/>
-        <path class="country" data-country="阿根廷"     d="M255,330 L280,345 L278,390 L260,410 L245,390 L248,355 Z"/>
-        <path class="country" data-country="英国"       d="M445,95 L455,90 L458,110 L448,115 L442,108 Z"/>
-        <path class="country" data-country="法国"       d="M450,115 L472,112 L478,130 L460,140 L448,130 Z"/>
-        <path class="country" data-country="德国"       d="M472,100 L492,98 L496,115 L472,118 L468,105 Z"/>
-        <path class="country" data-country="西班牙"     d="M442,135 L468,132 L470,148 L450,155 L438,148 Z"/>
-        <path class="country" data-country="意大利"     d="M472,130 L488,128 L490,155 L480,168 L470,155 L468,140 Z"/>
-        <path class="country" data-country="俄罗斯"     d="M490,60 L750,55 L760,100 L700,110 L600,115 L520,110 L492,95 Z"/>
-        <path class="country" data-country="土耳其"     d="M490,128 L530,125 L533,142 L490,145 Z"/>
-        <path class="country" data-country="沙特阿拉伯" d="M510,165 L545,162 L548,195 L525,205 L508,195 Z"/>
-        <path class="country" data-country="埃及"       d="M490,165 L515,163 L518,185 L490,188 Z"/>
-        <path class="country" data-country="尼日利亚"   d="M455,215 L490,212 L495,245 L465,255 L450,240 Z"/>
-        <path class="country" data-country="南非"       d="M470,315 L510,312 L515,350 L488,365 L465,348 Z"/>
-        <path class="country" data-country="中国"       d="M665,120 L780,115 L790,155 L760,175 L700,180 L665,170 L655,145 Z"/>
-        <path class="country" data-country="印度"       d="M600,165 L650,162 L658,215 L630,240 L605,220 L595,190 Z"/>
-        <path class="country" data-country="泰国"       d="M685,195 L705,192 L708,220 L690,230 L680,215 Z"/>
-        <path class="country" data-country="越南"       d="M718,185 L730,182 L732,220 L718,228 L712,210 Z"/>
-        <path class="country" data-country="菲律宾"     d="M770,200 L785,195 L788,230 L772,235 L765,218 Z"/>
-        <path class="country" data-country="日本"       d="M800,128 L815,122 L820,148 L805,155 L798,140 Z"/>
-        <path class="country" data-country="韩国"       d="M785,135 L800,133 L802,148 L786,150 Z"/>
-        <path class="country" data-country="澳大利亚"   d="M760,295 L850,288 L870,345 L840,380 L785,375 L758,340 Z"/>
-      </g>
-      <g fill="rgba(0,212,255,0.28)" font-size="6" font-family="Orbitron" text-anchor="middle" pointer-events="none">
-        <text x="215" y="152">USA</text><text x="213" y="72">CANADA</text>
-        <text x="714" y="150">CHINA</text><text x="625" y="205">INDIA</text>
-        <text x="808" y="140">JPN</text><text x="793" y="142">KR</text>
-        <text x="618" y="80">RUSSIA</text><text x="462" y="126">FR</text>
-        <text x="812" y="338">AUS</text><text x="197" y="210">MEX</text>
-      </g>
-      <g id="heat-layer"></g>
-      <g id="map-stars" opacity="0.45"></g>
-      <g id="flash-layer"></g>
-    </svg>
-  </div>
-</div>
+<!-- Modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h2>📍 提交避雷坐标</h2>
+    <p class="modal-sub">你的经历将帮助全球恋爱人士避开雷区</p>
 
-<div class="zoom-controls">
-  <button class="zoom-btn" onclick="manualZoom(1.45)">+</button>
-  <button class="zoom-btn" onclick="manualZoom(1/1.45)" style="font-size:15px;">−</button>
-  <button class="zoom-btn" onclick="resetZoom()" style="font-size:11px;">↺</button>
-</div>
-<div class="zhint" id="zhint">滚轮缩放 · 拖拽平移 · 提交后自动飞至城市</div>
-
-<div class="share-btn" onclick="openModal()">
-  <div class="share-inner">
-    <span class="share-icon">💢</span>
-    <span class="share-text">分享你的恋爱避雷坐标</span>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <div class="modal-hd">
-      <div>
-        <div class="modal-title">⚡ 投递避雷坐标</div>
-        <div class="modal-sub">提交后地图将自动旋转飞至目标城市</div>
-      </div>
-      <button class="modal-x" onclick="closeModal()">✕</button>
-    </div>
-    <div class="fsec">
-      <label class="flbl">▸ 渣男 / 渣女 性别</label>
-      <div class="ggroup">
-        <button class="gbtn" onclick="selectGender('男')" id="btn-male">♂ 渣男</button>
-        <button class="gbtn" onclick="selectGender('女')" id="btn-female">♀ 渣女</button>
+    <div class="form-group">
+      <label>你的性别</label>
+      <div class="radio-group">
+        <div class="radio-btn" data-group="gender" data-val="male">♂ 男</div>
+        <div class="radio-btn" data-group="gender" data-val="female">♀ 女</div>
       </div>
     </div>
-    <div class="fsec">
-      <label class="flbl">▸ 事件类型</label>
-      <div class="egrid">
-        <button class="ebtn" onclick="selectEvent('失联')" id="ev-lost">👻 突然失联</button>
-        <button class="ebtn" onclick="selectEvent('暧昧多线')" id="ev-multi">💔 暧昧多线</button>
-        <button class="ebtn" onclick="selectEvent('画饼')" id="ev-pie">🥧 画大饼</button>
-        <button class="ebtn" onclick="selectEvent('已读不回')" id="ev-read">📵 已读不回</button>
-        <button class="ebtn" onclick="selectEvent('PUA')" id="ev-pua">🎭 PUA 操控</button>
-        <button class="ebtn" onclick="selectEvent('分手甩锅')" id="ev-blame">🌀 分手甩锅</button>
+
+    <div class="form-group">
+      <label>踩雷类型</label>
+      <div class="chip-group">
+        <div class="chip" data-group="type" data-val="ghost">👻 失联</div>
+        <div class="chip" data-group="type" data-val="multiline">🎭 暧昧多线</div>
+        <div class="chip" data-group="type" data-val="pie">🥧 画饼</div>
+        <div class="chip" data-group="type" data-val="ignore">📵 已读不回</div>
+        <div class="chip" data-group="type" data-val="other">💫 其它</div>
       </div>
     </div>
-    <div class="fsec">
-      <label class="flbl">▸ 所在国家 / 地区</label>
-      <select class="fsel" id="sel-country" onchange="onCountryChange()">
-        <option value="">— 选择国家 —</option>
-        <option value="中国">🇨🇳 中国</option>
-        <option value="美国">🇺🇸 美国</option>
-        <option value="日本">🇯🇵 日本</option>
-        <option value="韩国">🇰🇷 韩国</option>
-        <option value="英国">🇬🇧 英国</option>
-        <option value="法国">🇫🇷 法国</option>
-        <option value="德国">🇩🇪 德国</option>
-        <option value="意大利">🇮🇹 意大利</option>
-        <option value="西班牙">🇪🇸 西班牙</option>
-        <option value="俄罗斯">🇷🇺 俄罗斯</option>
-        <option value="印度">🇮🇳 印度</option>
-        <option value="泰国">🇹🇭 泰国</option>
-        <option value="越南">🇻🇳 越南</option>
-        <option value="菲律宾">🇵🇭 菲律宾</option>
-        <option value="澳大利亚">🇦🇺 澳大利亚</option>
-        <option value="巴西">🇧🇷 巴西</option>
-        <option value="阿根廷">🇦🇷 阿根廷</option>
-        <option value="加拿大">🇨🇦 加拿大</option>
-        <option value="土耳其">🇹🇷 土耳其</option>
-        <option value="南非">🇿🇦 南非</option>
-        <option value="墨西哥">🇲🇽 墨西哥</option>
+
+    <div class="form-group">
+      <label>发生地点 — 国家</label>
+      <select id="country-select">
+        <option value="">请选择国家...</option>
       </select>
     </div>
-    <div class="fsec">
-      <label class="flbl">▸ 城市</label>
-      <select class="fsel" id="sel-city"><option value="">— 请先选择国家 —</option></select>
+
+    <div class="form-group">
+      <label>发生地点 — 城市</label>
+      <input type="text" id="city-input" placeholder="输入城市名称，如 上海、Tokyo..." list="city-suggestions">
+      <datalist id="city-suggestions"></datalist>
     </div>
-    <button class="subbtn" onclick="submitReport()">⚡ 投递坐标 · SUBMIT COORDINATES</button>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" id="modal-cancel">取消</button>
+      <button class="btn-submit" id="modal-submit">🚨 提交避雷！</button>
+    </div>
   </div>
 </div>
 
-<div class="tip" id="tip"></div>
-<div class="notif" id="notif"></div>
+<!-- Toast -->
+<div id="toast">✅ 避雷坐标已标记！感谢你的贡献</div>
 
 <script>
-// ── DATA ──────────────────────────────────────
-const cityData={
-  '中国':['北京','上海','广州','深圳','成都','杭州','武汉','西安','南京','重庆','天津','青岛','厦门','苏州','长沙','沈阳','郑州','哈尔滨'],
-  '美国':['纽约','洛杉矶','旧金山','芝加哥','迈阿密','西雅图','波士顿','拉斯维加斯','休斯顿','华盛顿DC','亚特兰大','达拉斯'],
-  '日本':['东京','大阪','京都','神户','横滨','名古屋','福冈','札幌','仙台','奈良'],
-  '韩国':['首尔','釜山','仁川','大邱','济州','光州'],
-  '英国':['伦敦','曼彻斯特','爱丁堡','利物浦','伯明翰','布里斯托'],
-  '法国':['巴黎','里昂','马赛','尼斯','波尔多','斯特拉斯堡'],
-  '德国':['柏林','慕尼黑','汉堡','法兰克福','科隆','杜塞尔多夫'],
-  '意大利':['罗马','米兰','威尼斯','佛罗伦萨','那不勒斯','都灵'],
-  '西班牙':['马德里','巴塞罗那','塞维利亚','瓦伦西亚','毕尔巴鄂'],
-  '俄罗斯':['莫斯科','圣彼得堡','叶卡捷琳堡','新西伯利亚'],
-  '印度':['孟买','新德里','班加罗尔','清奈','科尔卡塔','海得拉巴'],
-  '泰国':['曼谷','清迈','芭提雅','普吉','华欣'],
-  '越南':['河内','胡志明市','岘港','芽庄','会安'],
-  '菲律宾':['马尼拉','宿务','达沃','长滩岛'],
-  '澳大利亚':['悉尼','墨尔本','布里斯班','珀斯','黄金海岸','阿德莱德'],
-  '巴西':['圣保罗','里约热内卢','萨尔瓦多','巴西利亚','福塔莱萨'],
-  '阿根廷':['布宜诺斯艾利斯','科尔多瓦','罗萨里奥','门多萨'],
-  '加拿大':['多伦多','温哥华','蒙特利尔','卡尔加里','渥太华'],
-  '土耳其':['伊斯坦布尔','安卡拉','伊兹密尔','安塔利亚'],
-  '南非':['开普敦','约翰内斯堡','德班','比勒陀利亚'],
-  '墨西哥':['墨西哥城','坎昆','瓜达拉哈拉','蒙特雷'],
-};
-
-// Country center in SVG 1000×500 space
-const cCoords={
-  '中国':{x:714,y:150},'美国':{x:215,y:152},'日本':{x:808,y:140},
-  '韩国':{x:793,y:141},'英国':{x:450,y:103},'法国':{x:462,y:126},
-  '德国':{x:482,y:108},'意大利':{x:480,y:148},'西班牙':{x:455,y:144},
-  '俄罗斯':{x:620,y:80},'印度':{x:626,y:205},'泰国':{x:694,y:210},
-  '越南':{x:720,y:208},'菲律宾':{x:776,y:215},'澳大利亚':{x:812,y:338},
-  '巴西':{x:278,y:290},'阿根廷':{x:264,y:375},'加拿大':{x:213,y:76},
-  '土耳其':{x:511,y:135},'南非':{x:490,y:338},'墨西哥':{x:197,y:207},
-  '沙特阿拉伯':{x:527,y:182},'埃及':{x:502,y:175},'尼日利亚':{x:470,y:232},
-};
-
-// City offsets from country center
-const cityOff={
-  '中国':{'北京':[10,-15],'上海':[28,10],'广州':[20,22],'深圳':[23,25],'成都':[-16,10],'杭州':[26,8],'武汉':[8,15],'西安':[-10,8],'南京':[20,5],'重庆':[-7,15],'天津':[12,-12],'青岛':[28,0],'厦门':[28,18],'苏州':[24,6],'长沙':[10,20],'沈阳':[18,-22],'郑州':[3,4],'哈尔滨':[15,-30]},
-  '美国':{'纽约':[42,5],'洛杉矶':[-28,18],'旧金山':[-32,10],'芝加哥':[16,0],'迈阿密':[30,30],'西雅tle':[-34,-10],'西雅图':[-34,-10],'波士顿':[44,2],'拉斯维加斯':[-20,15],'休斯顿':[10,28],'华盛顿DC':[38,8],'亚特兰大':[24,22],'达拉斯':[4,25]},
-  '日本':{'东京':[6,5],'大阪':[0,12],'京都':[-2,10],'神户':[-5,13],'横滨':[8,7],'名古屋':[2,10],'福冈':[-6,15],'札幌':[4,-10],'仙台':[8,0],'奈良':[-1,11]},
-  '韩国':{'首尔':[0,-2],'釜山':[5,6],'仁川':[-3,-1],'大邱':[3,4],'济州':[0,10],'光州':[-3,5]},
-  '英国':{'伦敦':[2,8],'曼彻斯特':[-1,2],'爱丁堡':[-2,-5],'利物浦':[-3,3],'伯明翰':[0,5],'布里斯托':[-2,7]},
-  '法国':{'巴黎':[-1,-3],'里昂':[5,8],'马赛':[8,14],'尼斯':[12,13],'波尔多':[-6,8],'斯特拉斯堡':[10,0]},
-  '德国':{'柏林':[5,-5],'慕尼黑':[3,10],'汉堡':[0,-8],'法兰克福':[-2,5],'科隆':[-5,3],'杜塞尔多夫':[-6,2]},
-  '意大利':{'罗马':[3,8],'米兰':[-3,-5],'威尼斯':[5,-2],'佛罗伦萨':[2,5],'那不勒斯':[6,18],'都灵':[-5,-2]},
-  '西班牙':{'马德里':[3,2],'巴塞罗那':[12,-5],'塞维利亚':[-3,10],'瓦伦西亚':[8,5],'毕尔巴鄂':[0,-5]},
-  '俄罗斯':{'莫斯科':[-80,18],'圣彼得堡':[-92,8],'叶卡捷琳堡':[-22,10],'新西伯利亚':[38,12]},
-  '印度':{'孟买':[-12,22],'新德里':[-8,-5],'班加罗尔':[2,40],'清奈':[18,38],'科尔卡塔':[25,15],'海得拉巴':[8,30]},
-  '泰国':{'曼谷':[5,5],'清迈':[-2,-12],'芭提雅':[8,12],'普吉':[-2,22],'华欣':[4,15]},
-  '越南':{'河内':[0,-8],'胡志明市':[5,22],'岘港':[3,8],'芽庄':[4,18],'会安':[3,10]},
-  '菲律宾':{'马尼拉':[-2,2],'宿务':[3,14],'达沃':[5,22],'长滩岛':[-4,8]},
-  '澳大利亚':{'悉尼':[35,18],'墨尔本':[18,30],'布里斯班':[42,5],'珀斯':[-30,20],'黄金海岸':[44,12],'阿德莱德':[2,22]},
-  '巴西':{'圣保罗':[18,28],'里约热内卢':[22,22],'萨尔瓦多':[35,15],'巴西利亚':[10,8],'福塔莱萨':[30,-5]},
-  '阿根廷':{'布宜诺斯艾利斯':[-2,8],'科尔多瓦':[-5,-5],'罗萨里奥':[-3,0],'门多萨':[-12,-8]},
-  '加拿大':{'多伦多':[45,25],'温哥华':[-55,18],'蒙特利尔':[55,20],'卡尔加里':[-20,15],'渥太华':[50,22]},
-  '土耳其':{'伊斯坦布尔':[-10,0],'安卡拉':[2,4],'伊兹密尔':[-12,6],'安塔利亚':[-2,12]},
-  '南非':{'开普敦':[-8,22],'约翰内斯堡':[5,2],'德班':[18,10],'比勒陀利亚':[6,-2]},
-  '墨西哥':{'墨西哥城':[0,5],'坎昆':[22,8],'瓜达拉哈拉':[-8,5],'蒙特雷':[5,-8]},
-};
-
-let heatData={'中国':5,'美国':5,'日本':4,'韩国':5,'英国':4,'法国':4,'德国':3,'意大利':3,'泰国':4,'印度':3,'俄罗斯':2,'澳大利亚':3,'巴西':2,'越南':3};
-let formState={gender:null,event:null};
-let totalCount=2847,todayCount=138;
-
-// ── STARFIELD ─────────────────────────────────
-const canvas=document.getElementById('starfield');
-const ctx=canvas.getContext('2d');
-let stars=[],W,H;
-function initCanvas(){
-  W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight;
-  stars=Array.from({length:300},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.6+0.2,tw:Math.random()*Math.PI*2,ts:Math.random()*0.022+0.008,blue:Math.random()>0.85}));
-}
-function drawStars(){
-  ctx.clearRect(0,0,W,H);
-  stars.forEach(s=>{
-    s.tw+=s.ts; const a=0.1+Math.abs(Math.sin(s.tw))*0.9;
-    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-    ctx.fillStyle=s.blue?`rgba(100,200,255,${a})`:`rgba(255,255,255,${a})`; ctx.fill();
-    if(s.r>1.2){const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r*4);g.addColorStop(0,`rgba(150,220,255,${a*0.22})`);g.addColorStop(1,'transparent');ctx.beginPath();ctx.arc(s.x,s.y,s.r*4,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();}
-  });
-}
-
-// ── ZOOM / PAN ────────────────────────────────
-const wrapper=document.getElementById('map-wrapper');
-let sc=1,tx=0,ty=0,dragging=false,lx=0,ly=0;
-
-function applyT(smooth=false){
-  wrapper.classList.toggle('smooth',smooth);
-  wrapper.style.transform=`translate(${tx}px,${ty}px) scale(${sc})`;
-}
-
-wrapper.addEventListener('wheel',e=>{
-  e.preventDefault();
-  sc=Math.min(Math.max(sc*(e.deltaY>0?0.84:1.19),0.5),10);
-  applyT(false);
-},{passive:false});
-
-wrapper.addEventListener('mousedown',e=>{dragging=true;lx=e.clientX;ly=e.clientY;wrapper.classList.remove('smooth');});
-window.addEventListener('mousemove',e=>{if(!dragging)return;tx+=e.clientX-lx;ty+=e.clientY-ly;lx=e.clientX;ly=e.clientY;applyT(false);});
-window.addEventListener('mouseup',()=>dragging=false);
-
-let ltd=0;
-wrapper.addEventListener('touchstart',e=>{if(e.touches.length===1){dragging=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;}else if(e.touches.length===2){ltd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}},{passive:true});
-wrapper.addEventListener('touchmove',e=>{
-  if(e.touches.length===1&&dragging){tx+=e.touches[0].clientX-lx;ty+=e.touches[0].clientY-ly;lx=e.touches[0].clientX;ly=e.touches[0].clientY;applyT(false);}
-  else if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);sc=Math.min(Math.max(sc*(d/ltd),0.5),10);ltd=d;applyT(false);}
-},{passive:true});
-wrapper.addEventListener('touchend',()=>dragging=false);
-
-function manualZoom(f){sc=Math.min(Math.max(sc*f,0.5),10);applyT(true);}
-function resetZoom(){sc=1;tx=0;ty=0;applyT(true);}
-
-function flyToCity(country,city){
-  const pos=cCoords[country]; if(!pos) return;
-  const off=(cityOff[country]||{})[city]||[0,0];
-  const cx=pos.x+off[0], cy=pos.y+off[1];
-
-  const svgW=wrapper.offsetWidth;
-  const svgH=svgW*0.5; // 1000:500 ratio
-  const toScreen=svgW/1000;
-
-  // pixel position of target in wrapper (unscaled)
-  const px=cx*toScreen;
-  const py=cy*(svgH/500);
-
-  const targetScale=4.8;
-  // After scaling, wrapper center moves; we need to offset so target ends at screen center
-  tx=window.innerWidth/2 - (wrapper.offsetLeft + px)*targetScale + wrapper.offsetLeft*(targetScale-1);
-  ty=window.innerHeight/2 - (wrapper.offsetTop + py)*targetScale + wrapper.offsetTop*(targetScale-1);
-
-  // Simpler reliable version: use wrapper's natural position
-  const wRect=wrapper.getBoundingClientRect();
-  const naturalLeft=(window.innerWidth-wrapper.offsetWidth)/2;
-  const naturalTop=(window.innerHeight-wrapper.offsetHeight)/2;
-
-  tx=(window.innerWidth/2)-(naturalLeft+px)*targetScale+naturalLeft;
-  ty=(window.innerHeight/2)-(naturalTop+py)*targetScale+naturalTop;
-  sc=targetScale;
-  applyT(true);
-}
-
-// ── SVG HELPERS ───────────────────────────────
-function el(tag,attrs){
-  const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
-  Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v)); return e;
-}
-function anim(attr,vals,dur,begin='0s'){
-  return el('animate',{attributeName:attr,values:vals,dur:dur+'s',begin,repeatCount:'indefinite'});
-}
-
-// ── HEAT LAYER ────────────────────────────────
-function heatColor(h){
-  if(h>=5)return{core:'#ff4d8d',glow:'rgba(255,50,100,0.52)'};
-  if(h>=4)return{core:'#ff9500',glow:'rgba(255,120,0,0.42)'};
-  if(h>=3)return{core:'#ffd700',glow:'rgba(255,200,0,0.35)'};
-  return{core:'#00d4ff',glow:'rgba(0,200,255,0.28)'};
-}
-
-function renderHeat(){
-  const layer=document.getElementById('heat-layer'); layer.innerHTML='';
-  Object.entries(heatData).forEach(([c,h])=>{
-    const pos=cCoords[c]; if(!pos) return;
-    const col=heatColor(h), r=6+h*4;
-    const ring=el('circle',{cx:pos.x,cy:pos.y,r:r*2,fill:col.glow,filter:'url(#glow)'});
-    ring.appendChild(anim('r',`${r*1.4};${r*3};${r*1.4}`,1.8+Math.random()));
-    ring.appendChild(anim('opacity','0.22;0.52;0.22',1.8+Math.random()));
-    layer.appendChild(ring);
-    const core=el('circle',{cx:pos.x,cy:pos.y,r,fill:col.core,filter:'url(#sglow)'});
-    core.appendChild(anim('opacity','0.5;1;0.5',0.9+Math.random()*0.5));
-    layer.appendChild(core);
-    if(h>=4) for(let i=0;i<Math.min(Math.round(h),8);i++){
-      const a=(i/h)*Math.PI*2,d=r*2+Math.random()*9;
-      const sp=el('circle',{cx:pos.x+Math.cos(a)*d,cy:pos.y+Math.sin(a)*d,r:1.3,fill:col.core});
-      sp.appendChild(anim('opacity','0;1;0',0.6+Math.random()*0.7,(Math.random()*2.2)+'s'));
-      layer.appendChild(sp);
-    }
-    if(h>=4){
-      const lbl=el('text',{x:pos.x,y:pos.y-r-4,'text-anchor':'middle',fill:col.core,'font-size':'5.5','font-family':'Noto Sans SC',opacity:'0.88'});
-      lbl.textContent=c; layer.appendChild(lbl);
-    }
-  });
-}
-
-function genMapStars(){
-  const l=document.getElementById('map-stars'); l.innerHTML='';
-  for(let i=0;i<100;i++){
-    const c=el('circle',{cx:Math.random()*1000,cy:Math.random()*500,r:Math.random()*1.3+0.2,fill:'white'});
-    c.appendChild(anim('opacity','0.04;1;0.04',1.5+Math.random()*2.5,(Math.random()*3)+'s'));
-    l.appendChild(c);
-  }
-}
-
-// ── FLASH ─────────────────────────────────────
-function flashPoint(x,y,label){
-  const layer=document.getElementById('flash-layer');
-  for(let i=0;i<4;i++){
-    const ring=el('circle',{cx:x,cy:y,r:0,fill:'none',stroke:'#ff4d8d','stroke-width':i<2?'2.5':'1.2',opacity:1,filter:'url(#mglow)'});
-    layer.appendChild(ring);
-    setTimeout(()=>{
-      let st=null;
-      (function a(ts){if(!st)st=ts;const p=Math.min((ts-st)/1900,1);ring.setAttribute('r',p*95);ring.setAttribute('opacity',1-p);p<1?requestAnimationFrame(a):ring.remove();})(performance.now());
-    },i*170);
-  }
-  const burst=el('circle',{cx:x,cy:y,r:4,fill:'#ff4d8d',filter:'url(#mglow)',opacity:0});
-  layer.appendChild(burst);
-  let bs=null;
-  (function a(ts){if(!bs)bs=ts;const p=Math.min((ts-bs)/1000,1);burst.setAttribute('opacity',p<0.2?p/0.2:1-(p-0.2)/0.8);burst.setAttribute('r',4+p*38);p<1?requestAnimationFrame(a):burst.remove();})(performance.now());
-  const txt=el('text',{x,y:y-26,'text-anchor':'middle',fill:'#ff4d8d','font-size':'8','font-family':'Orbitron',filter:'url(#glow)'});
-  txt.textContent='⚡ '+label+' ⚡'; layer.appendChild(txt);
-  let ls=null;
-  (function a(ts){if(!ls)ls=ts;const p=Math.min((ts-ls)/2400,1);txt.setAttribute('opacity',p<0.08?p/0.08:p>0.72?(1-p)/0.28:1);txt.setAttribute('y',y-26-p*24);p<1?requestAnimationFrame(a):txt.remove();})(performance.now());
-}
-
-// ── DANMU ─────────────────────────────────────
-const emos={'失联':'👻','暧昧多线':'💔','画饼':'🥧','已读不回':'📵','PUA':'🎭','分手甩锅':'🌀'};
-const evList=['失联','暧昧多线','画饼','已读不回','PUA','分手甩锅'];
-const danmuCities=['伦敦','东京','首尔','巴黎','上海','纽约','曼谷','悉尼','北京','洛杉矶','柏林','马德里','深圳','大阪','新加坡','多伦多','里约','孟买','雅典','迪拜','成都','釜山'];
-const genderList=['渣男','渣女'];
-const dc=document.getElementById('danmu-canvas');
-
-const danmuTemplates=[
-  (city,ev,g,em)=>`${em} 刚才有一位${city}用户标记了「${ev}」`,
-  (city,ev,g,em)=>`⚠ ${city} · ${g} · ${ev} 预警`,
-  (city,ev,g,em)=>`💀 ${city}新增 ${ev} 避雷记录`,
-  (city,ev,g,em)=>`📍 ${city}用户提交了避雷坐标`,
-  (city,ev,g,em)=>`${em} ${g}警报 · ${city} · ${ev}`,
-  (city,ev,g,em)=>`🛰 系统监测到${city}附近有${ev}行为`,
-  (city,ev,g,em)=>`⚡ 避雷提醒：${city}出现${g}${ev}`,
+// ═══════════════════════════════════════════════════════
+//  INITIAL DATA
+// ═══════════════════════════════════════════════════════
+const INITIAL_DATA = [
+  // Asia - high density
+  { city: "上海", lat: 31.2304, lng: 121.4737, count: 3240, country: "中国" },
+  { city: "北京", lat: 39.9042, lng: 116.4074, count: 2980, country: "中国" },
+  { city: "广州", lat: 23.1291, lng: 113.2644, count: 2100, country: "中国" },
+  { city: "深圳", lat: 22.5431, lng: 114.0579, count: 1870, country: "中国" },
+  { city: "成都", lat: 30.5728, lng: 104.0668, count: 1430, country: "中国" },
+  { city: "武汉", lat: 30.5928, lng: 114.3052, count: 990, country: "中国" },
+  { city: "杭州", lat: 30.2741, lng: 120.1551, count: 1250, country: "中国" },
+  { city: "重庆", lat: 29.5630, lng: 106.5516, count: 880, country: "中国" },
+  { city: "东京", lat: 35.6762, lng: 139.6503, count: 2560, country: "日本" },
+  { city: "大阪", lat: 34.6937, lng: 135.5023, count: 1340, country: "日本" },
+  { city: "首尔", lat: 37.5665, lng: 126.9780, count: 1890, country: "韩国" },
+  { city: "釜山", lat: 35.1796, lng: 129.0756, count: 670, country: "韩国" },
+  { city: "新加坡", lat: 1.3521, lng: 103.8198, count: 1120, country: "新加坡" },
+  { city: "曼谷", lat: 13.7563, lng: 100.5018, count: 1450, country: "泰国" },
+  { city: "孟买", lat: 19.0760, lng: 72.8777, count: 1680, country: "印度" },
+  { city: "德里", lat: 28.6139, lng: 77.2090, count: 1230, country: "印度" },
+  { city: "台北", lat: 25.0330, lng: 121.5654, count: 980, country: "台湾" },
+  { city: "香港", lat: 22.3193, lng: 114.1694, count: 1560, country: "香港" },
+  { city: "吉隆坡", lat: 3.1390, lng: 101.6869, count: 760, country: "马来西亚" },
+  { city: "雅加达", lat: -6.2088, lng: 106.8456, count: 890, country: "印尼" },
+  // Europe
+  { city: "巴黎", lat: 48.8566, lng: 2.3522, count: 2340, country: "法国" },
+  { city: "伦敦", lat: 51.5074, lng: -0.1278, count: 2780, country: "英国" },
+  { city: "柏林", lat: 52.5200, lng: 13.4050, count: 1450, country: "德国" },
+  { city: "马德里", lat: 40.4168, lng: -3.7038, count: 1230, country: "西班牙" },
+  { city: "巴塞罗那", lat: 41.3851, lng: 2.1734, count: 1080, country: "西班牙" },
+  { city: "罗马", lat: 41.9028, lng: 12.4964, count: 1340, country: "意大利" },
+  { city: "米兰", lat: 45.4642, lng: 9.1900, count: 980, country: "意大利" },
+  { city: "阿姆斯特丹", lat: 52.3676, lng: 4.9041, count: 890, country: "荷兰" },
+  { city: "维也纳", lat: 48.2082, lng: 16.3738, count: 670, country: "奥地利" },
+  { city: "苏黎世", lat: 47.3769, lng: 8.5417, count: 450, country: "瑞士" },
+  { city: "莫斯科", lat: 55.7558, lng: 37.6173, count: 1760, country: "俄罗斯" },
+  { city: "圣彼得堡", lat: 59.9311, lng: 30.3609, count: 780, country: "俄罗斯" },
+  { city: "华沙", lat: 52.2297, lng: 21.0122, count: 540, country: "波兰" },
+  { city: "布拉格", lat: 50.0755, lng: 14.4378, count: 430, country: "捷克" },
+  // Americas
+  { city: "纽约", lat: 40.7128, lng: -74.0060, count: 3450, country: "美国" },
+  { city: "洛杉矶", lat: 34.0522, lng: -118.2437, count: 2680, country: "美国" },
+  { city: "芝加哥", lat: 41.8781, lng: -87.6298, count: 1890, country: "美国" },
+  { city: "旧金山", lat: 37.7749, lng: -122.4194, count: 1670, country: "美国" },
+  { city: "迈阿密", lat: 25.7617, lng: -80.1918, count: 1340, country: "美国" },
+  { city: "休斯顿", lat: 29.7604, lng: -95.3698, count: 980, country: "美国" },
+  { city: "多伦多", lat: 43.6532, lng: -79.3832, count: 1230, country: "加拿大" },
+  { city: "温哥华", lat: 49.2827, lng: -123.1207, count: 890, country: "加拿大" },
+  { city: "圣保罗", lat: -23.5505, lng: -46.6333, count: 1560, country: "巴西" },
+  { city: "里约热内卢", lat: -22.9068, lng: -43.1729, count: 1340, country: "巴西" },
+  { city: "墨西哥城", lat: 19.4326, lng: -99.1332, count: 1120, country: "墨西哥" },
+  { city: "布宜诺斯艾利斯", lat: -34.6037, lng: -58.3816, count: 870, country: "阿根廷" },
+  // Middle East & Africa
+  { city: "迪拜", lat: 25.2048, lng: 55.2708, count: 1890, country: "阿联酋" },
+  { city: "开罗", lat: 30.0444, lng: 31.2357, count: 980, country: "埃及" },
+  { city: "拉各斯", lat: 6.5244, lng: 3.3792, count: 670, country: "尼日利亚" },
+  { city: "约翰内斯堡", lat: -26.2041, lng: 28.0473, count: 560, country: "南非" },
+  { city: "伊斯坦布尔", lat: 41.0082, lng: 28.9784, count: 1450, country: "土耳其" },
+  // Oceania
+  { city: "悉尼", lat: -33.8688, lng: 151.2093, count: 1340, country: "澳大利亚" },
+  { city: "墨尔本", lat: -37.8136, lng: 144.9631, count: 980, country: "澳大利亚" },
+  { city: "奥克兰", lat: -36.8485, lng: 174.7633, count: 430, country: "新西兰" },
 ];
 
-function spawnDanmu(overrideText=null,urgent=false){
-  const ev=evList[Math.floor(Math.random()*evList.length)];
-  const city=danmuCities[Math.floor(Math.random()*danmuCities.length)];
-  const g=genderList[Math.floor(Math.random()*genderList.length)];
-  const em=emos[ev];
-  const txt=overrideText||(danmuTemplates[Math.floor(Math.random()*danmuTemplates.length)])(city,ev,g,em);
-  const type=urgent?'pink':Math.random()>0.75?'pink':Math.random()>0.6?'gold':'';
-  const d=document.createElement('div');
-  d.className='danmu'+(type?' '+type:'');
-
-  const useVert=!urgent&&Math.random()>0.72;
-  if(useVert){
-    d.classList.add('vert');
-    const side=Math.random()>0.5;
-    d.style[side?'right':'left']=(6+Math.random()*28)+'px';
-    d.style.bottom='-160px';
-    const dur=13+Math.random()*9;
-    d.style.animation=`danmu-up ${dur}s linear forwards`;
-    d.style.setProperty('--dur',dur+'s');
-    d.textContent=txt;
-    dc.appendChild(d);
-    // keyframe via JS
-    const id='du_'+Date.now()+Math.random();
-    d.style.animationName=id;
-    const sh=document.createElement('style');
-    sh.textContent=`@keyframes ${id}{from{opacity:0;transform:translateY(0);}5%{opacity:1;}90%{opacity:0.75;}to{opacity:0;transform:translateY(-${window.innerHeight+200}px);}}`;
-    document.head.appendChild(sh);
-    setTimeout(()=>{d.remove();sh.remove();},dur*1000+300);
-  } else {
-    const laneH=window.innerHeight/14;
-    const lane=Math.floor(Math.random()*14);
-    const topY=lane*laneH+laneH*0.1+Math.random()*laneH*0.6;
-    d.style.top=topY+'px';
-    d.style.right='-500px';
-    const dur=urgent?9:11+Math.random()*8;
-    if(urgent){d.style.fontSize='13px';d.style.boxShadow='0 0 14px rgba(255,77,141,0.3)';}
-    d.textContent=txt;
-    dc.appendChild(d);
-    const id='dh_'+Date.now()+Math.random();
-    d.style.animationName=id;
-    const sh=document.createElement('style');
-    sh.textContent=`@keyframes ${id}{from{opacity:0;transform:translateX(0);}4%{opacity:1;}88%{opacity:0.8;}to{opacity:0;transform:translateX(-${window.innerWidth+600}px);}}`;
-    document.head.appendChild(sh);
-    d.style.animationDuration=dur+'s';
-    d.style.animationTimingFunction='linear';
-    d.style.animationFillMode='forwards';
-    setTimeout(()=>{d.remove();sh.remove();},dur*1000+300);
-  }
-}
-
-setInterval(()=>spawnDanmu(),1900);
-setTimeout(()=>{for(let i=0;i<6;i++)setTimeout(()=>spawnDanmu(),i*700);},400);
-
-// ── TOOLTIP ───────────────────────────────────
-const tip=document.getElementById('tip');
-document.querySelectorAll('.country').forEach(p=>{
-  p.style.cursor='pointer';
-  p.addEventListener('mouseenter',function(e){
-    const c=this.dataset.country,h=heatData[c]||0;
-    tip.innerHTML=`${c} · 风险 ${Math.round(h)}/8 · ${Math.floor(h*190+40)} 条记录`;
-    tip.style.opacity='1'; this.style.fill='rgba(0,75,155,0.88)';
-  });
-  p.addEventListener('mousemove',e=>{tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY-32)+'px';});
-  p.addEventListener('mouseleave',function(){tip.style.opacity='0';this.style.fill='';});
+const COUNTRIES = [...new Set(INITIAL_DATA.map(d => d.country))].sort();
+const CITIES_BY_COUNTRY = {};
+INITIAL_DATA.forEach(d => {
+  if (!CITIES_BY_COUNTRY[d.country]) CITIES_BY_COUNTRY[d.country] = [];
+  CITIES_BY_COUNTRY[d.country].push(d);
 });
 
-// ── MODAL ─────────────────────────────────────
-function openModal(){document.getElementById('modal').classList.add('active');}
-function closeModal(){document.getElementById('modal').classList.remove('active');}
-document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+// City name -> lat/lng lookup
+const CITY_COORDS = {};
+INITIAL_DATA.forEach(d => { CITY_COORDS[d.city] = { lat: d.lat, lng: d.lng }; });
 
-function selectGender(g){
-  formState.gender=g;
-  document.getElementById('btn-male').classList.toggle('sel',g==='男');
-  document.getElementById('btn-female').classList.toggle('sel',g==='女');
-}
-function selectEvent(e){
-  formState.event=e;
-  document.querySelectorAll('.ebtn').forEach(b=>b.classList.remove('sel'));
-  const m={'失联':'ev-lost','暧昧多线':'ev-multi','画饼':'ev-pie','已读不回':'ev-read','PUA':'ev-pua','分手甩锅':'ev-blame'};
-  document.getElementById(m[e]).classList.add('sel');
-}
-function onCountryChange(){
-  const c=document.getElementById('sel-country').value;
-  const cs=document.getElementById('sel-city');
-  cs.innerHTML='<option value="">— 选择城市 —</option>';
-  (cityData[c]||[]).forEach(x=>{const o=document.createElement('option');o.value=x;o.textContent=x;cs.appendChild(o);});
+let totalCount = INITIAL_DATA.reduce((s, d) => s + d.count, 0);
+let todayCount = Math.floor(totalCount * 0.03);
+let hotData = INITIAL_DATA.map(d => ({ ...d }));
+
+// ═══════════════════════════════════════════════════════
+//  DASHBOARD COUNTER ANIMATION
+// ═══════════════════════════════════════════════════════
+function animateCounter(el, target, duration = 2000, prefix = '') {
+  let start = 0;
+  const step = target / (duration / 16);
+  const timer = setInterval(() => {
+    start += step;
+    if (start >= target) { start = target; clearInterval(timer); }
+    el.textContent = prefix + Math.floor(start).toLocaleString('zh-CN');
+  }, 16);
 }
 
-function submitReport(){
-  const country=document.getElementById('sel-country').value;
-  const city=document.getElementById('sel-city').value;
-  if(!formState.gender||!formState.event||!country||!city){showNotif('⚠ 请完整填写所有选项');return;}
+setTimeout(() => {
+  animateCounter(document.getElementById('total-count'), totalCount);
+  animateCounter(document.getElementById('today-count'), todayCount, 1500, '+');
+}, 600);
 
-  heatData[country]=Math.min((heatData[country]||1)+1.3,9);
-  totalCount++;todayCount++;
-  document.getElementById('total-count').textContent=totalCount.toLocaleString();
-  document.getElementById('today-count').textContent=todayCount;
+// Live ticker simulation
+setInterval(() => {
+  const inc = Math.floor(Math.random() * 5) + 1;
+  totalCount += inc;
+  todayCount += inc;
+  document.getElementById('total-count').textContent = totalCount.toLocaleString('zh-CN');
+  document.getElementById('today-count').textContent = '+' + todayCount.toLocaleString('zh-CN');
+}, 3000);
 
-  closeModal();
-  renderHeat();
-  flyToCity(country,city);
+// ═══════════════════════════════════════════════════════
+//  GLOBE SETUP
+// ═══════════════════════════════════════════════════════
+const container = document.getElementById('globe-container');
 
-  const pos=cCoords[country];
-  const off=(cityOff[country]||{})[city]||[0,0];
-  if(pos) setTimeout(()=>flashPoint(pos.x+off[0],pos.y+off[1],country+'·'+city),1100);
+const Globe = window.Globe;
+let globe = null;
+let time = 0;
+let autoRotate = true;
 
-  // Urgent danmu
-  const em=emos[formState.event]||'⚡';
-  setTimeout(()=>spawnDanmu(`${em} 刚才有人在${city}标记了「${formState.event}」· 请注意防范`,true),600);
-
-  showNotif(`💢 坐标已投递：${country} · ${city}`);
-
-  // reset
-  formState={gender:null,event:null};
-  document.querySelectorAll('.gbtn,.ebtn').forEach(b=>b.classList.remove('sel'));
-  document.getElementById('sel-country').value='';
-  document.getElementById('sel-city').innerHTML='<option value="">— 请先选择国家 —</option>';
+function getRiskLevel(count) {
+  if (count >= 2000) return 'high';
+  if (count >= 1000) return 'medium';
+  if (count >= 400) return 'low';
+  return 'minimal';
 }
 
-function showNotif(msg){
-  const n=document.getElementById('notif');
-  n.textContent=msg;n.classList.add('show');
-  setTimeout(()=>n.classList.remove('show'),3200);
+function getRiskColor(count) {
+  if (count >= 2000) return '#ff3d3d';
+  if (count >= 1000) return '#ff7c1f';
+  if (count >= 400) return '#ffd23f';
+  return 'rgba(200,210,255,0.5)';
 }
 
-// ── LOOP ──────────────────────────────────────
-function loop(){drawStars();requestAnimationFrame(loop);}
-window.addEventListener('resize',initCanvas);
-initCanvas(); genMapStars(); renderHeat(); loop();
+function getPointSize(count) {
+  const base = 0.3;
+  const scale = Math.sqrt(count / 100) * 0.12;
+  return Math.min(base + scale, 1.8);
+}
 
-setInterval(()=>{
-  const cs=Object.keys(heatData),r=cs[Math.floor(Math.random()*cs.length)];
-  if(heatData[r]<7.5)heatData[r]+=0.04;
-  renderHeat();
-  totalCount+=Math.floor(Math.random()*3);
-  document.getElementById('total-count').textContent=totalCount.toLocaleString();
-},5000);
+// Build points array for THREE particle system approach via custom layer
+function buildPointsData() {
+  return hotData.map(d => ({
+    ...d,
+    color: getRiskColor(d.count),
+    size: getPointSize(d.count),
+    risk: getRiskLevel(d.count)
+  }));
+}
 
-setTimeout(()=>document.getElementById('zhint').style.opacity='0',6000);
+async function initGlobe() {
+  // Load countries geojson
+  let geoJson = null;
+  try {
+    const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+    const topo = await res.json();
+    const { feature } = await import('https://cdn.skypack.dev/topojson-client@3');
+    geoJson = feature(topo, topo.objects.countries);
+  } catch(e) {
+    console.warn('GeoJSON load failed, using fallback');
+  }
+
+  globe = Globe({ animateIn: true })(container)
+    .backgroundColor('#000510')
+    .globeImageUrl('https://unpkg.com/three-globe@2.30.0/example/img/earth-night.jpg')
+    .atmosphereColor('#0066ff')
+    .atmosphereAltitude(0.25)
+    .pointsData(buildPointsData())
+    .pointLat('lat')
+    .pointLng('lng')
+    .pointColor('color')
+    .pointRadius('size')
+    .pointAltitude(0.005)
+    .pointsMerge(false)
+    .onPointClick((point) => {
+      showToast(`📍 ${point.city} · ${point.country} — ${point.count.toLocaleString()} 次避雷记录`);
+    });
+
+  if (geoJson) {
+    globe
+      .polygonsData(geoJson.features)
+      .polygonCapColor(() => 'rgba(0,8,30,0.6)')
+      .polygonSideColor(() => 'rgba(0,150,255,0.05)')
+      .polygonStrokeColor(() => '#0096ff')
+      .polygonAltitude(0.001);
+  }
+
+  // Controls
+  globe.controls().autoRotate = true;
+  globe.controls().autoRotateSpeed = 0.4;
+  globe.controls().enableDamping = true;
+  globe.controls().dampingFactor = 0.1;
+  globe.controls().minDistance = 150;
+  globe.controls().maxDistance = 600;
+
+  // Initial POV
+  globe.pointOfView({ lat: 30, lng: 108, altitude: 2.2 }, 1000);
+
+  // Blinking animation via requestAnimationFrame
+  let lastBlink = 0;
+  const blinkIntervals = { high: 800, medium: 1400, low: 2500, minimal: 0 };
+
+  function animate(ts) {
+    requestAnimationFrame(animate);
+    time = ts * 0.001;
+
+    // Update point colors for blinking effect
+    if (ts - lastBlink > 80) {
+      lastBlink = ts;
+      const updated = hotData.map(d => {
+        const risk = getRiskLevel(d.count);
+        let brightness = 1;
+        if (risk === 'high') {
+          brightness = 0.4 + 0.6 * Math.abs(Math.sin(time * 3.8 + d.lat));
+        } else if (risk === 'medium') {
+          brightness = 0.55 + 0.45 * Math.abs(Math.sin(time * 2.2 + d.lng * 0.05));
+        } else if (risk === 'low') {
+          brightness = 0.7 + 0.3 * Math.abs(Math.sin(time * 1.1 + d.lat * 0.07));
+        } else {
+          brightness = 0.35 + 0.15 * Math.abs(Math.sin(time * 0.5));
+        }
+
+        const baseColor = getRiskColor(d.count);
+        const alpha = 0.3 + 0.7 * brightness;
+        return {
+          ...d,
+          color: applyBrightness(baseColor, brightness, alpha),
+          size: getPointSize(d.count) * (0.85 + 0.15 * brightness),
+          risk
+        };
+      });
+      globe.pointsData(updated);
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+function applyBrightness(hex, b, alpha) {
+  // Parse color and apply brightness
+  if (hex.startsWith('rgba')) return hex;
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const bl = parseInt(hex.slice(5,7),16);
+  return `rgba(${Math.min(255,Math.round(r*b))},${Math.min(255,Math.round(g*b))},${Math.min(255,Math.round(bl*b))},${alpha.toFixed(2)})`;
+}
+
+initGlobe();
+
+// ═══════════════════════════════════════════════════════
+//  RIPPLE CANVAS
+// ═══════════════════════════════════════════════════════
+const rCanvas = document.getElementById('ripple-canvas');
+const rCtx = rCanvas.getContext('2d');
+let ripples = [];
+
+function resizeCanvas() {
+  rCanvas.width = window.innerWidth;
+  rCanvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function createRipple(screenX, screenY) {
+  ripples.push({ x: screenX, y: screenY, r: 0, maxR: 180, alpha: 1, t: 0 });
+}
+
+function drawRipples() {
+  rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
+  ripples = ripples.filter(rp => rp.alpha > 0.01);
+  ripples.forEach(rp => {
+    rp.t += 0.03;
+    rp.r = rp.maxR * (1 - Math.exp(-rp.t * 2));
+    rp.alpha = Math.exp(-rp.t * 1.2);
+
+    // Outer ring
+    rCtx.beginPath();
+    rCtx.arc(rp.x, rp.y, rp.r, 0, Math.PI * 2);
+    rCtx.strokeStyle = `rgba(255,80,30,${rp.alpha * 0.9})`;
+    rCtx.lineWidth = 3;
+    rCtx.stroke();
+
+    // Inner ring
+    if (rp.r > 30) {
+      rCtx.beginPath();
+      rCtx.arc(rp.x, rp.y, rp.r * 0.6, 0, Math.PI * 2);
+      rCtx.strokeStyle = `rgba(255,160,60,${rp.alpha * 0.6})`;
+      rCtx.lineWidth = 1.5;
+      rCtx.stroke();
+    }
+
+    // Core glow
+    const grad = rCtx.createRadialGradient(rp.x, rp.y, 0, rp.x, rp.y, rp.r * 0.3);
+    grad.addColorStop(0, `rgba(255,120,40,${rp.alpha * 0.4})`);
+    grad.addColorStop(1, 'transparent');
+    rCtx.beginPath();
+    rCtx.arc(rp.x, rp.y, rp.r * 0.3, 0, Math.PI * 2);
+    rCtx.fillStyle = grad;
+    rCtx.fill();
+  });
+  requestAnimationFrame(drawRipples);
+}
+drawRipples();
+
+// ═══════════════════════════════════════════════════════
+//  MODAL + FORM LOGIC
+// ═══════════════════════════════════════════════════════
+const overlay = document.getElementById('modal-overlay');
+const countrySelect = document.getElementById('country-select');
+const cityInput = document.getElementById('city-input');
+const citySuggestions = document.getElementById('city-suggestions');
+
+// Populate country select
+COUNTRIES.forEach(c => {
+  const opt = document.createElement('option');
+  opt.value = c; opt.textContent = c;
+  countrySelect.appendChild(opt);
+});
+
+countrySelect.addEventListener('change', () => {
+  const cities = CITIES_BY_COUNTRY[countrySelect.value] || [];
+  citySuggestions.innerHTML = '';
+  cities.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.city;
+    citySuggestions.appendChild(opt);
+  });
+  if (cities.length > 0) cityInput.value = '';
+});
+
+// Radio / chip selection
+document.querySelectorAll('.radio-btn, .chip').forEach(el => {
+  el.addEventListener('click', () => {
+    const group = el.dataset.group;
+    document.querySelectorAll(`[data-group="${group}"]`).forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+  });
+});
+
+document.getElementById('fab').addEventListener('click', () => {
+  overlay.classList.add('open');
+});
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  overlay.classList.remove('open');
+});
+overlay.addEventListener('click', (e) => {
+  if (e.target === overlay) overlay.classList.remove('open');
+});
+
+document.getElementById('modal-submit').addEventListener('click', () => {
+  const gender = document.querySelector('[data-group="gender"].selected')?.dataset.val;
+  const type = document.querySelector('[data-group="type"].selected')?.dataset.val;
+  const country = countrySelect.value;
+  const city = cityInput.value.trim();
+
+  if (!gender || !type || !country || !city) {
+    showToast('⚠️ 请填写所有字段再提交', 2500);
+    return;
+  }
+
+  overlay.classList.remove('open');
+
+  // Find or create data point
+  let existing = hotData.find(d => d.city === city);
+  let targetLat, targetLng;
+
+  if (existing) {
+    existing.count += Math.floor(Math.random() * 50) + 10;
+    targetLat = existing.lat;
+    targetLng = existing.lng;
+  } else {
+    // Attempt to find city coords, fallback to country centroid
+    const knownCity = CITY_COORDS[city];
+    const countryCity = (CITIES_BY_COUNTRY[country] || [])[0];
+    targetLat = knownCity?.lat || countryCity?.lat || 30 + (Math.random()-0.5)*40;
+    targetLng = knownCity?.lng || countryCity?.lng || 100 + (Math.random()-0.5)*80;
+
+    hotData.push({ city, country, lat: targetLat, lng: targetLng, count: 80 });
+    totalCount += 80;
+    todayCount += 80;
+  }
+
+  // Fly globe to location
+  if (globe) {
+    globe.controls().autoRotate = false;
+    globe.pointOfView({ lat: targetLat, lng: targetLng, altitude: 1.2 }, 2000);
+
+    // Show ripple on screen after arrival
+    setTimeout(() => {
+      const screenPos = globe.getScreenCoords(targetLat, targetLng, 0.01);
+      if (screenPos) {
+        for (let i = 0; i < 4; i++) {
+          setTimeout(() => createRipple(screenPos.x, screenPos.y), i * 300);
+        }
+      }
+      showToast('🚨 避雷坐标已永久标记！保护后来者');
+      // Re-enable rotation after 3s
+      setTimeout(() => {
+        if (globe) globe.controls().autoRotate = true;
+      }, 4000);
+    }, 2200);
+  }
+
+  totalCount += Math.floor(Math.random() * 10) + 1;
+  document.getElementById('total-count').textContent = totalCount.toLocaleString('zh-CN');
+  document.getElementById('today-count').textContent = '+' + todayCount.toLocaleString('zh-CN');
+});
+
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+function showToast(msg, duration = 3000) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), duration);
+}
+
+// ═══════════════════════════════════════════════════════
+//  RESPONSIVE RESIZE
+// ═══════════════════════════════════════════════════════
+window.addEventListener('resize', () => {
+  if (globe) {
+    globe.width(window.innerWidth);
+    globe.height(window.innerHeight);
+  }
+});
 </script>
 </body>
 </html>
