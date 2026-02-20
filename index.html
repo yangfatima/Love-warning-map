@@ -215,6 +215,32 @@
   /* ── RIPPLE CANVAS ── */
   #ripple-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
 
+  /* ── LANGUAGE SWITCHER ── */
+  #lang-switcher {
+    position: fixed; bottom: 30px; left: 24px;
+    display: flex; align-items: center;
+    background: var(--glass);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    border-radius: 50px;
+    padding: 4px;
+    z-index: 10;
+    box-shadow: 0 4px 20px rgba(0,150,255,0.12);
+  }
+  .lang-btn {
+    padding: 8px 16px; border: none; border-radius: 50px;
+    font-size: 12px; font-weight: 600; letter-spacing: 1px;
+    cursor: pointer; transition: all 0.25s; background: transparent;
+    color: rgba(255,255,255,0.45); font-family: 'Orbitron', monospace;
+  }
+  .lang-btn.active {
+    background: linear-gradient(135deg, #0096ff, #0055cc);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(0,150,255,0.4);
+  }
+  .lang-btn:hover:not(.active) { color: rgba(255,255,255,0.8); }
+
   /* mobile */
   @media (max-width: 480px) {
     #dashboard { top: 10px; left: 10px; padding: 12px 16px; min-width: 160px; }
@@ -222,6 +248,7 @@
     #legend { top: 10px; right: 10px; padding: 12px 14px; }
     #fab { bottom: 20px; right: 12px; font-size: 12px; padding: 12px 16px; }
     #modal { padding: 24px 20px; }
+    #lang-switcher { bottom: 20px; left: 12px; }
   }
 </style>
 </head>
@@ -258,6 +285,18 @@
     <div class="legend-dot-wrap dot-white"><div class="legend-ring"></div><div class="legend-dot"></div></div>
     <span>数据稀少</span>
   </div>
+</div>
+
+<!-- Lang Switcher -->
+<div id="lang-switcher">
+  <button class="lang-btn active" id="btn-zh" onclick="setLang('zh')">中文</button>
+  <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+</div>
+
+<!-- Lang Switcher -->
+<div id="lang-switcher">
+  <button class="lang-btn active" id="btn-zh" onclick="setLang('zh')">中文</button>
+  <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
 </div>
 
 <!-- FAB -->
@@ -679,7 +718,7 @@ document.getElementById('modal-submit').addEventListener('click', () => {
   const city = cityInput.value.trim();
 
   if (!gender || !type || !country || !city) {
-    showToast('⚠️ 请填写所有字段再提交', 2500);
+    showToast(t('toastWarn'), 2500);
     return;
   }
 
@@ -718,7 +757,7 @@ document.getElementById('modal-submit').addEventListener('click', () => {
           setTimeout(() => createRipple(screenPos.x, screenPos.y), i * 300);
         }
       }
-      showToast('🚨 避雷坐标已永久标记！保护后来者');
+      showToast(t('toastSuccess'));
       // Re-enable rotation after 3s
       setTimeout(() => {
         if (globe) globe.controls().autoRotate = true;
@@ -750,6 +789,151 @@ window.addEventListener('resize', () => {
     globe.height(window.innerHeight);
   }
 });
+
+// ═══════════════════════════════════════════════════════
+//  I18N — LANGUAGE SWITCHER
+// ═══════════════════════════════════════════════════════
+const TRANSLATIONS = {
+  zh: {
+    pageTitle: '💔 全球恋爱避雷地图',
+    dashLabel: '💔 全球避雷投票总数',
+    todayLabel: '🔥 今日新增避雷',
+    legendTitle: '⚡ 风险预警标准',
+    legendHigh: '高危区域',
+    legendMed: '中度预警',
+    legendLow: '轻度风险',
+    legendMin: '数据稀少',
+    fab: '✨ 分享你的恋爱避雷坐标',
+    modalTitle: '📍 提交避雷坐标',
+    modalSub: '你的经历将帮助全球恋爱人士避开雷区',
+    genderLabel: '你的性别',
+    genderM: '♂ 男',
+    genderF: '♀ 女',
+    typeLabel: '踩雷类型',
+    typeGhost: '👻 失联',
+    typeMulti: '🎭 暧昧多线',
+    typePie: '🥧 画饼',
+    typeIgnore: '📵 已读不回',
+    typeOther: '💫 其它',
+    countryLabel: '发生地点 — 国家',
+    countryPlaceholder: '请选择国家...',
+    cityLabel: '发生地点 — 城市',
+    cityPlaceholder: '输入城市名称，如 上海、Tokyo...',
+    cancelBtn: '取消',
+    submitBtn: '🚨 提交避雷！',
+    toastDefault: '✅ 避雷坐标已标记！感谢你的贡献',
+    toastSuccess: '🚨 避雷坐标已永久标记！保护后来者',
+    toastWarn: '⚠️ 请填写所有字段再提交',
+  },
+  en: {
+    pageTitle: '💔 Global Love Minefield Map',
+    dashLabel: '💔 Total Global Reports',
+    todayLabel: '🔥 New Reports Today',
+    legendTitle: '⚡ RISK LEVELS',
+    legendHigh: 'High Risk',
+    legendMed: 'Moderate Alert',
+    legendLow: 'Low Risk',
+    legendMin: 'Sparse Data',
+    fab: '✨ Share Your Heartbreak Spot',
+    modalTitle: '📍 Submit a Warning',
+    modalSub: 'Your story helps others avoid the same mistake',
+    genderLabel: 'Your Gender',
+    genderM: '♂ Male',
+    genderF: '♀ Female',
+    typeLabel: 'Incident Type',
+    typeGhost: '👻 Ghosted',
+    typeMulti: '🎭 Two-timing',
+    typePie: '🥧 Empty Promises',
+    typeIgnore: '📵 Left on Read',
+    typeOther: '💫 Other',
+    countryLabel: 'Location — Country',
+    countryPlaceholder: 'Select a country...',
+    cityLabel: 'Location — City',
+    cityPlaceholder: 'Enter city, e.g. Shanghai, Tokyo...',
+    cancelBtn: 'Cancel',
+    submitBtn: '🚨 Submit Warning!',
+    toastDefault: '✅ Location marked! Thank you for sharing',
+    toastSuccess: '🚨 Warning permanently marked! Others are now protected',
+    toastWarn: '⚠️ Please fill in all fields before submitting',
+  }
+};
+
+let currentLang = 'zh';
+let currentToastMsg = { warn: null, success: null };
+
+function setLang(lang) {
+  if (lang === currentLang) return;
+  currentLang = lang;
+
+  // Update button states
+  document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+
+  const t = TRANSLATIONS[lang];
+
+  // Page title
+  document.title = t.pageTitle;
+
+  // Dashboard
+  document.querySelector('#dashboard .label').textContent = t.dashLabel;
+  document.querySelector('#dashboard .today-label').textContent = t.todayLabel;
+
+  // Legend
+  document.querySelector('#legend h3').textContent = t.legendTitle;
+  const legendSpans = document.querySelectorAll('#legend .legend-item span');
+  legendSpans[0].textContent = t.legendHigh;
+  legendSpans[1].textContent = t.legendMed;
+  legendSpans[2].textContent = t.legendLow;
+  legendSpans[3].textContent = t.legendMin;
+
+  // FAB
+  document.getElementById('fab').textContent = t.fab;
+
+  // Modal
+  document.querySelector('#modal h2').textContent = t.modalTitle;
+  document.querySelector('#modal .modal-sub').textContent = t.modalSub;
+
+  const labels = document.querySelectorAll('#modal .form-group label');
+  labels[0].textContent = t.genderLabel;
+  labels[1].textContent = t.typeLabel;
+  labels[2].textContent = t.countryLabel;
+  labels[3].textContent = t.cityLabel;
+
+  // Gender radio btns
+  const genderBtns = document.querySelectorAll('[data-group="gender"]');
+  genderBtns[0].textContent = t.genderM;
+  genderBtns[1].textContent = t.genderF;
+
+  // Type chips
+  const chips = document.querySelectorAll('[data-group="type"]');
+  chips[0].textContent = t.typeGhost;
+  chips[1].textContent = t.typeMulti;
+  chips[2].textContent = t.typePie;
+  chips[3].textContent = t.typeIgnore;
+  chips[4].textContent = t.typeOther;
+
+  // Country select placeholder
+  document.querySelector('#country-select option[value=""]').textContent = t.countryPlaceholder;
+
+  // City input placeholder
+  document.getElementById('city-input').placeholder = t.cityPlaceholder;
+
+  // Modal buttons
+  document.getElementById('modal-cancel').textContent = t.cancelBtn;
+  document.getElementById('modal-submit').textContent = t.submitBtn;
+
+  // Update toast warn/success references for future toasts
+  currentToastMsg = { warn: t.toastWarn, success: t.toastSuccess };
+}
+
+// Override showToast to use i18n-aware messages
+const _origShowToast = showToast;
+// Patch submit logic to use lang-aware messages
+// We'll expose a helper
+function t(key) { return TRANSLATIONS[currentLang][key]; }
+
+// Initialize lang state
+currentToastMsg = { warn: TRANSLATIONS.zh.toastWarn, success: TRANSLATIONS.zh.toastSuccess };
 </script>
 </body>
 </html>
