@@ -355,77 +355,125 @@
 //  INITIAL DATA
 // ═══════════════════════════════════════════════════════
 const INITIAL_DATA = [
-  // Asia - high density
-  { city: "上海", lat: 31.2304, lng: 121.4737, count: 3240, country: "中国" },
-  { city: "北京", lat: 39.9042, lng: 116.4074, count: 2980, country: "中国" },
-  { city: "广州", lat: 23.1291, lng: 113.2644, count: 2100, country: "中国" },
-  { city: "深圳", lat: 22.5431, lng: 114.0579, count: 1870, country: "中国" },
-  { city: "成都", lat: 30.5728, lng: 104.0668, count: 1430, country: "中国" },
-  { city: "武汉", lat: 30.5928, lng: 114.3052, count: 990, country: "中国" },
-  { city: "杭州", lat: 30.2741, lng: 120.1551, count: 1250, country: "中国" },
-  { city: "重庆", lat: 29.5630, lng: 106.5516, count: 880, country: "中国" },
-  { city: "东京", lat: 35.6762, lng: 139.6503, count: 2560, country: "日本" },
-  { city: "大阪", lat: 34.6937, lng: 135.5023, count: 1340, country: "日本" },
-  { city: "首尔", lat: 37.5665, lng: 126.9780, count: 1890, country: "韩国" },
-  { city: "釜山", lat: 35.1796, lng: 129.0756, count: 670, country: "韩国" },
-  { city: "新加坡", lat: 1.3521, lng: 103.8198, count: 1120, country: "新加坡" },
-  { city: "曼谷", lat: 13.7563, lng: 100.5018, count: 1450, country: "泰国" },
-  { city: "孟买", lat: 19.0760, lng: 72.8777, count: 1680, country: "印度" },
-  { city: "德里", lat: 28.6139, lng: 77.2090, count: 1230, country: "印度" },
-  { city: "台北", lat: 25.0330, lng: 121.5654, count: 980, country: "台湾" },
-  { city: "香港", lat: 22.3193, lng: 114.1694, count: 1560, country: "香港" },
-  { city: "吉隆坡", lat: 3.1390, lng: 101.6869, count: 760, country: "马来西亚" },
-  { city: "雅加达", lat: -6.2088, lng: 106.8456, count: 890, country: "印尼" },
+  // Asia
+  { city: "上海", cityEn: "Shanghai",          lat: 31.2304, lng: 121.4737, count: 3240, country: "中国",      countryEn: "China" },
+  { city: "北京", cityEn: "Beijing",            lat: 39.9042, lng: 116.4074, count: 2980, country: "中国",      countryEn: "China" },
+  { city: "广州", cityEn: "Guangzhou",          lat: 23.1291, lng: 113.2644, count: 2100, country: "中国",      countryEn: "China" },
+  { city: "深圳", cityEn: "Shenzhen",           lat: 22.5431, lng: 114.0579, count: 1870, country: "中国",      countryEn: "China" },
+  { city: "成都", cityEn: "Chengdu",            lat: 30.5728, lng: 104.0668, count: 1430, country: "中国",      countryEn: "China" },
+  { city: "武汉", cityEn: "Wuhan",              lat: 30.5928, lng: 114.3052, count: 990,  country: "中国",      countryEn: "China" },
+  { city: "杭州", cityEn: "Hangzhou",           lat: 30.2741, lng: 120.1551, count: 1250, country: "中国",      countryEn: "China" },
+  { city: "重庆", cityEn: "Chongqing",          lat: 29.5630, lng: 106.5516, count: 880,  country: "中国",      countryEn: "China" },
+  { city: "东京", cityEn: "Tokyo",              lat: 35.6762, lng: 139.6503, count: 2560, country: "日本",      countryEn: "Japan" },
+  { city: "大阪", cityEn: "Osaka",              lat: 34.6937, lng: 135.5023, count: 1340, country: "日本",      countryEn: "Japan" },
+  { city: "首尔", cityEn: "Seoul",              lat: 37.5665, lng: 126.9780, count: 1890, country: "韩国",      countryEn: "South Korea" },
+  { city: "釜山", cityEn: "Busan",              lat: 35.1796, lng: 129.0756, count: 670,  country: "韩国",      countryEn: "South Korea" },
+  { city: "新加坡", cityEn: "Singapore",        lat: 1.3521,  lng: 103.8198, count: 1120, country: "新加坡",    countryEn: "Singapore" },
+  { city: "曼谷", cityEn: "Bangkok",            lat: 13.7563, lng: 100.5018, count: 1450, country: "泰国",      countryEn: "Thailand" },
+  { city: "孟买", cityEn: "Mumbai",             lat: 19.0760, lng: 72.8777,  count: 1680, country: "印度",      countryEn: "India" },
+  { city: "德里", cityEn: "Delhi",              lat: 28.6139, lng: 77.2090,  count: 1230, country: "印度",      countryEn: "India" },
+  { city: "台北", cityEn: "Taipei",             lat: 25.0330, lng: 121.5654, count: 980,  country: "台湾",      countryEn: "Taiwan" },
+  { city: "香港", cityEn: "Hong Kong",          lat: 22.3193, lng: 114.1694, count: 1560, country: "香港",      countryEn: "Hong Kong" },
+  { city: "吉隆坡", cityEn: "Kuala Lumpur",     lat: 3.1390,  lng: 101.6869, count: 760,  country: "马来西亚",  countryEn: "Malaysia" },
+  { city: "雅加达", cityEn: "Jakarta",          lat: -6.2088, lng: 106.8456, count: 890,  country: "印尼",      countryEn: "Indonesia" },
   // Europe
-  { city: "巴黎", lat: 48.8566, lng: 2.3522, count: 2340, country: "法国" },
-  { city: "伦敦", lat: 51.5074, lng: -0.1278, count: 2780, country: "英国" },
-  { city: "柏林", lat: 52.5200, lng: 13.4050, count: 1450, country: "德国" },
-  { city: "马德里", lat: 40.4168, lng: -3.7038, count: 1230, country: "西班牙" },
-  { city: "巴塞罗那", lat: 41.3851, lng: 2.1734, count: 1080, country: "西班牙" },
-  { city: "罗马", lat: 41.9028, lng: 12.4964, count: 1340, country: "意大利" },
-  { city: "米兰", lat: 45.4642, lng: 9.1900, count: 980, country: "意大利" },
-  { city: "阿姆斯特丹", lat: 52.3676, lng: 4.9041, count: 890, country: "荷兰" },
-  { city: "维也纳", lat: 48.2082, lng: 16.3738, count: 670, country: "奥地利" },
-  { city: "苏黎世", lat: 47.3769, lng: 8.5417, count: 450, country: "瑞士" },
-  { city: "莫斯科", lat: 55.7558, lng: 37.6173, count: 1760, country: "俄罗斯" },
-  { city: "圣彼得堡", lat: 59.9311, lng: 30.3609, count: 780, country: "俄罗斯" },
-  { city: "华沙", lat: 52.2297, lng: 21.0122, count: 540, country: "波兰" },
-  { city: "布拉格", lat: 50.0755, lng: 14.4378, count: 430, country: "捷克" },
+  { city: "巴黎", cityEn: "Paris",              lat: 48.8566, lng: 2.3522,   count: 2340, country: "法国",      countryEn: "France" },
+  { city: "伦敦", cityEn: "London",             lat: 51.5074, lng: -0.1278,  count: 2780, country: "英国",      countryEn: "UK" },
+  { city: "柏林", cityEn: "Berlin",             lat: 52.5200, lng: 13.4050,  count: 1450, country: "德国",      countryEn: "Germany" },
+  { city: "马德里", cityEn: "Madrid",           lat: 40.4168, lng: -3.7038,  count: 1230, country: "西班牙",    countryEn: "Spain" },
+  { city: "巴塞罗那", cityEn: "Barcelona",      lat: 41.3851, lng: 2.1734,   count: 1080, country: "西班牙",    countryEn: "Spain" },
+  { city: "罗马", cityEn: "Rome",               lat: 41.9028, lng: 12.4964,  count: 1340, country: "意大利",    countryEn: "Italy" },
+  { city: "米兰", cityEn: "Milan",              lat: 45.4642, lng: 9.1900,   count: 980,  country: "意大利",    countryEn: "Italy" },
+  { city: "阿姆斯特丹", cityEn: "Amsterdam",   lat: 52.3676, lng: 4.9041,   count: 890,  country: "荷兰",      countryEn: "Netherlands" },
+  { city: "维也纳", cityEn: "Vienna",           lat: 48.2082, lng: 16.3738,  count: 670,  country: "奥地利",    countryEn: "Austria" },
+  { city: "苏黎世", cityEn: "Zurich",           lat: 47.3769, lng: 8.5417,   count: 450,  country: "瑞士",      countryEn: "Switzerland" },
+  { city: "莫斯科", cityEn: "Moscow",           lat: 55.7558, lng: 37.6173,  count: 1760, country: "俄罗斯",    countryEn: "Russia" },
+  { city: "圣彼得堡", cityEn: "St. Petersburg", lat: 59.9311, lng: 30.3609,  count: 780,  country: "俄罗斯",    countryEn: "Russia" },
+  { city: "华沙", cityEn: "Warsaw",             lat: 52.2297, lng: 21.0122,  count: 540,  country: "波兰",      countryEn: "Poland" },
+  { city: "布拉格", cityEn: "Prague",           lat: 50.0755, lng: 14.4378,  count: 430,  country: "捷克",      countryEn: "Czech Republic" },
   // Americas
-  { city: "纽约", lat: 40.7128, lng: -74.0060, count: 3450, country: "美国" },
-  { city: "洛杉矶", lat: 34.0522, lng: -118.2437, count: 2680, country: "美国" },
-  { city: "芝加哥", lat: 41.8781, lng: -87.6298, count: 1890, country: "美国" },
-  { city: "旧金山", lat: 37.7749, lng: -122.4194, count: 1670, country: "美国" },
-  { city: "迈阿密", lat: 25.7617, lng: -80.1918, count: 1340, country: "美国" },
-  { city: "休斯顿", lat: 29.7604, lng: -95.3698, count: 980, country: "美国" },
-  { city: "多伦多", lat: 43.6532, lng: -79.3832, count: 1230, country: "加拿大" },
-  { city: "温哥华", lat: 49.2827, lng: -123.1207, count: 890, country: "加拿大" },
-  { city: "圣保罗", lat: -23.5505, lng: -46.6333, count: 1560, country: "巴西" },
-  { city: "里约热内卢", lat: -22.9068, lng: -43.1729, count: 1340, country: "巴西" },
-  { city: "墨西哥城", lat: 19.4326, lng: -99.1332, count: 1120, country: "墨西哥" },
-  { city: "布宜诺斯艾利斯", lat: -34.6037, lng: -58.3816, count: 870, country: "阿根廷" },
+  { city: "纽约", cityEn: "New York",           lat: 40.7128, lng: -74.0060, count: 3450, country: "美国",      countryEn: "USA" },
+  { city: "洛杉矶", cityEn: "Los Angeles",      lat: 34.0522, lng: -118.2437,count: 2680, country: "美国",      countryEn: "USA" },
+  { city: "芝加哥", cityEn: "Chicago",          lat: 41.8781, lng: -87.6298, count: 1890, country: "美国",      countryEn: "USA" },
+  { city: "旧金山", cityEn: "San Francisco",    lat: 37.7749, lng: -122.4194,count: 1670, country: "美国",      countryEn: "USA" },
+  { city: "迈阿密", cityEn: "Miami",            lat: 25.7617, lng: -80.1918, count: 1340, country: "美国",      countryEn: "USA" },
+  { city: "休斯顿", cityEn: "Houston",          lat: 29.7604, lng: -95.3698, count: 980,  country: "美国",      countryEn: "USA" },
+  { city: "多伦多", cityEn: "Toronto",          lat: 43.6532, lng: -79.3832, count: 1230, country: "加拿大",    countryEn: "Canada" },
+  { city: "温哥华", cityEn: "Vancouver",        lat: 49.2827, lng: -123.1207,count: 890,  country: "加拿大",    countryEn: "Canada" },
+  { city: "圣保罗", cityEn: "São Paulo",        lat: -23.5505,lng: -46.6333, count: 1560, country: "巴西",      countryEn: "Brazil" },
+  { city: "里约热内卢", cityEn: "Rio de Janeiro",lat:-22.9068,lng: -43.1729, count: 1340, country: "巴西",      countryEn: "Brazil" },
+  { city: "墨西哥城", cityEn: "Mexico City",    lat: 19.4326, lng: -99.1332, count: 1120, country: "墨西哥",    countryEn: "Mexico" },
+  { city: "布宜诺斯艾利斯", cityEn: "Buenos Aires", lat: -34.6037, lng: -58.3816, count: 870, country: "阿根廷", countryEn: "Argentina" },
   // Middle East & Africa
-  { city: "迪拜", lat: 25.2048, lng: 55.2708, count: 1890, country: "阿联酋" },
-  { city: "开罗", lat: 30.0444, lng: 31.2357, count: 980, country: "埃及" },
-  { city: "拉各斯", lat: 6.5244, lng: 3.3792, count: 670, country: "尼日利亚" },
-  { city: "约翰内斯堡", lat: -26.2041, lng: 28.0473, count: 560, country: "南非" },
-  { city: "伊斯坦布尔", lat: 41.0082, lng: 28.9784, count: 1450, country: "土耳其" },
+  { city: "迪拜", cityEn: "Dubai",              lat: 25.2048, lng: 55.2708,  count: 1890, country: "阿联酋",    countryEn: "UAE" },
+  { city: "开罗", cityEn: "Cairo",              lat: 30.0444, lng: 31.2357,  count: 980,  country: "埃及",      countryEn: "Egypt" },
+  { city: "拉各斯", cityEn: "Lagos",            lat: 6.5244,  lng: 3.3792,   count: 670,  country: "尼日利亚",  countryEn: "Nigeria" },
+  { city: "约翰内斯堡", cityEn: "Johannesburg", lat: -26.2041,lng: 28.0473,  count: 560,  country: "南非",      countryEn: "South Africa" },
+  { city: "伊斯坦布尔", cityEn: "Istanbul",     lat: 41.0082, lng: 28.9784,  count: 1450, country: "土耳其",    countryEn: "Turkey" },
   // Oceania
-  { city: "悉尼", lat: -33.8688, lng: 151.2093, count: 1340, country: "澳大利亚" },
-  { city: "墨尔本", lat: -37.8136, lng: 144.9631, count: 980, country: "澳大利亚" },
-  { city: "奥克兰", lat: -36.8485, lng: 174.7633, count: 430, country: "新西兰" },
+  { city: "悉尼", cityEn: "Sydney",             lat: -33.8688,lng: 151.2093, count: 1340, country: "澳大利亚",  countryEn: "Australia" },
+  { city: "墨尔本", cityEn: "Melbourne",        lat: -37.8136,lng: 144.9631, count: 980,  country: "澳大利亚",  countryEn: "Australia" },
+  { city: "奥克兰", cityEn: "Auckland",         lat: -36.8485,lng: 174.7633, count: 430,  country: "新西兰",    countryEn: "New Zealand" },
 ];
 
-const COUNTRIES = [...new Set(INITIAL_DATA.map(d => d.country))].sort();
-const CITIES_BY_COUNTRY = {};
+// Build bilingual country/city lookup structures
+// Key is always the zh name (stable); we display by currentLang
+const COUNTRIES_ZH = [...new Set(INITIAL_DATA.map(d => d.country))].sort();
+const CITIES_BY_COUNTRY_ZH = {};
 INITIAL_DATA.forEach(d => {
-  if (!CITIES_BY_COUNTRY[d.country]) CITIES_BY_COUNTRY[d.country] = [];
-  CITIES_BY_COUNTRY[d.country].push(d);
+  if (!CITIES_BY_COUNTRY_ZH[d.country]) CITIES_BY_COUNTRY_ZH[d.country] = [];
+  CITIES_BY_COUNTRY_ZH[d.country].push(d);
 });
 
-// City name -> lat/lng lookup
+// City zh name -> coords lookup
 const CITY_COORDS = {};
-INITIAL_DATA.forEach(d => { CITY_COORDS[d.city] = { lat: d.lat, lng: d.lng }; });
+INITIAL_DATA.forEach(d => {
+  CITY_COORDS[d.city] = { lat: d.lat, lng: d.lng };
+  CITY_COORDS[d.cityEn] = { lat: d.lat, lng: d.lng };
+});
+
+// Helper: get display name based on lang
+function cityName(d) { return currentLang === 'en' ? d.cityEn : d.city; }
+function countryName(d) { return currentLang === 'en' ? d.countryEn : d.country; }
+
+// Build sorted unique country list for current lang
+function getCountryList() {
+  const seen = new Set();
+  return INITIAL_DATA
+    .map(d => ({ zh: d.country, en: d.countryEn }))
+    .filter(c => { if (seen.has(c.zh)) return false; seen.add(c.zh); return true; })
+    .sort((a,b) => (currentLang === 'en' ? a.en.localeCompare(b.en) : a.zh.localeCompare(b.zh)));
+}
+
+// Populate / refresh country <select>
+function refreshCountrySelect() {
+  const sel = document.getElementById('country-select');
+  const prevZhVal = sel.dataset.zhVal || '';  // remember zh key across lang switch
+  sel.innerHTML = '';
+  const ph = document.createElement('option');
+  ph.value = ''; ph.textContent = TRANSLATIONS[currentLang].countryPlaceholder;
+  sel.appendChild(ph);
+  getCountryList().forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.zh;                                  // always store zh key
+    opt.textContent = currentLang === 'en' ? c.en : c.zh;
+    sel.appendChild(opt);
+  });
+  if (prevZhVal) sel.value = prevZhVal;
+  refreshCitySuggestions(prevZhVal);
+}
+
+// Populate / refresh city <datalist> based on selected country (zh key)
+function refreshCitySuggestions(zhCountry) {
+  const dl = document.getElementById('city-suggestions');
+  dl.innerHTML = '';
+  const cities = CITIES_BY_COUNTRY_ZH[zhCountry] || [];
+  cities.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = currentLang === 'en' ? c.cityEn : c.city;
+    dl.appendChild(opt);
+  });
+}
 
 let totalCount = INITIAL_DATA.reduce((s, d) => s + d.count, 0);
 let todayCount = Math.floor(totalCount * 0.03);
@@ -674,22 +722,14 @@ const countrySelect = document.getElementById('country-select');
 const cityInput = document.getElementById('city-input');
 const citySuggestions = document.getElementById('city-suggestions');
 
-// Populate country select
-COUNTRIES.forEach(c => {
-  const opt = document.createElement('option');
-  opt.value = c; opt.textContent = c;
-  countrySelect.appendChild(opt);
-});
+// Initial country select population
+refreshCountrySelect();
 
 countrySelect.addEventListener('change', () => {
-  const cities = CITIES_BY_COUNTRY[countrySelect.value] || [];
-  citySuggestions.innerHTML = '';
-  cities.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c.city;
-    citySuggestions.appendChild(opt);
-  });
-  if (cities.length > 0) cityInput.value = '';
+  const zhCountry = countrySelect.value;
+  countrySelect.dataset.zhVal = zhCountry;
+  refreshCitySuggestions(zhCountry);
+  cityInput.value = '';
 });
 
 // Radio / chip selection
@@ -724,8 +764,8 @@ document.getElementById('modal-submit').addEventListener('click', () => {
 
   overlay.classList.remove('open');
 
-  // Find or create data point
-  let existing = hotData.find(d => d.city === city);
+  // Find or create data point (match by both zh and en city name)
+  let existing = hotData.find(d => d.city === city || d.cityEn === city);
   let targetLat, targetLng;
 
   if (existing) {
@@ -733,13 +773,13 @@ document.getElementById('modal-submit').addEventListener('click', () => {
     targetLat = existing.lat;
     targetLng = existing.lng;
   } else {
-    // Attempt to find city coords, fallback to country centroid
+    // Attempt to find city coords via bilingual CITY_COORDS, fallback to country centroid
     const knownCity = CITY_COORDS[city];
-    const countryCity = (CITIES_BY_COUNTRY[country] || [])[0];
+    const countryCity = (CITIES_BY_COUNTRY_ZH[country] || [])[0];
     targetLat = knownCity?.lat || countryCity?.lat || 30 + (Math.random()-0.5)*40;
     targetLng = knownCity?.lng || countryCity?.lng || 100 + (Math.random()-0.5)*80;
 
-    hotData.push({ city, country, lat: targetLat, lng: targetLng, count: 80 });
+    hotData.push({ city, cityEn: city, country, countryEn: country, lat: targetLat, lng: targetLng, count: 80 });
     totalCount += 80;
     todayCount += 80;
   }
@@ -912,11 +952,13 @@ function setLang(lang) {
   chips[3].textContent = t.typeIgnore;
   chips[4].textContent = t.typeOther;
 
-  // Country select placeholder
-  document.querySelector('#country-select option[value=""]').textContent = t.countryPlaceholder;
+  // Country select + city datalist — full re-render in new language
+  refreshCountrySelect();
 
   // City input placeholder
   document.getElementById('city-input').placeholder = t.cityPlaceholder;
+  // Clear city input on lang switch to avoid stale value
+  document.getElementById('city-input').value = '';
 
   // Modal buttons
   document.getElementById('modal-cancel').textContent = t.cancelBtn;
