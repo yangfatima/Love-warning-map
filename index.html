@@ -81,13 +81,57 @@
     box-shadow: 0 8px 32px rgba(0,150,255,0.1), inset 0 1px 0 rgba(255,255,255,0.06);
   }
   #legend h3 { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--blue); margin-bottom: 12px; }
-  .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; color: rgba(255,255,255,0.8); }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .dot-red { background: var(--red); box-shadow: 0 0 8px var(--red); animation: pulse-red 0.8s ease-in-out infinite; }
-  .dot-orange { background: var(--orange); box-shadow: 0 0 6px var(--orange); animation: pulse-red 1.4s ease-in-out infinite; }
-  .dot-yellow { background: var(--yellow); box-shadow: 0 0 4px var(--yellow); animation: pulse-red 2.5s ease-in-out infinite; }
-  .dot-white { background: rgba(255,255,255,0.4); }
-  @keyframes pulse-red { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+  .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12px; color: rgba(255,255,255,0.8); }
+  .legend-item:last-child { margin-bottom: 0; }
+
+  /* Each dot is a mini canvas-like element with its own ring */
+  .legend-dot-wrap { position: relative; width: 18px; height: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; position: relative; z-index: 1; }
+  .legend-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid transparent; }
+
+  /* 🔴 HIGH — rapid hard flash: bright ↔ near-invisible, scale pops */
+  .dot-red .legend-dot { background: #ff3d3d; box-shadow: 0 0 10px 3px #ff3d3d; animation: blink-high 0.55s steps(1, end) infinite; }
+  .dot-red .legend-ring { border-color: #ff3d3d; animation: ring-high 0.55s ease-out infinite; }
+  @keyframes blink-high {
+    0%  { opacity: 1;    transform: scale(1.25); box-shadow: 0 0 14px 5px #ff3d3d; }
+    50% { opacity: 0.08; transform: scale(0.7);  box-shadow: none; }
+    100%{ opacity: 1;    transform: scale(1.25); box-shadow: 0 0 14px 5px #ff3d3d; }
+  }
+  @keyframes ring-high {
+    0%   { transform: scale(1);   opacity: 0.9; }
+    70%  { transform: scale(2.2); opacity: 0; }
+    100% { transform: scale(1);   opacity: 0; }
+  }
+
+  /* 🟠 MEDIUM — smooth rhythmic pulse, moderate scale */
+  .dot-orange .legend-dot { background: #ff7c1f; box-shadow: 0 0 8px 2px #ff7c1f; animation: blink-med 1.2s ease-in-out infinite; }
+  .dot-orange .legend-ring { border-color: #ff7c1f; animation: ring-med 1.2s ease-out infinite; }
+  @keyframes blink-med {
+    0%,100% { opacity: 1;   transform: scale(1.1); box-shadow: 0 0 10px 3px #ff7c1f; }
+    50%     { opacity: 0.25; transform: scale(0.8); box-shadow: 0 0 2px 1px #ff7c1f; }
+  }
+  @keyframes ring-med {
+    0%   { transform: scale(1);   opacity: 0.7; }
+    80%  { transform: scale(2);   opacity: 0; }
+    100% { transform: scale(1);   opacity: 0; }
+  }
+
+  /* 🟡 LOW — slow gentle breathe, never fully dims */
+  .dot-yellow .legend-dot { background: #ffd23f; box-shadow: 0 0 6px 1px #ffd23f; animation: blink-low 2.4s ease-in-out infinite; }
+  .dot-yellow .legend-ring { border-color: #ffd23f; animation: ring-low 2.4s ease-out infinite; }
+  @keyframes blink-low {
+    0%,100% { opacity: 1;   transform: scale(1); box-shadow: 0 0 7px 2px #ffd23f; }
+    50%     { opacity: 0.5; transform: scale(0.88); box-shadow: 0 0 2px 0px #ffd23f; }
+  }
+  @keyframes ring-low {
+    0%   { transform: scale(1);   opacity: 0.5; }
+    90%  { transform: scale(1.7); opacity: 0; }
+    100% { transform: scale(1);   opacity: 0; }
+  }
+
+  /* ⚪ MINIMAL — static dim glow, no animation */
+  .dot-white .legend-dot { background: rgba(200,215,255,0.35); box-shadow: 0 0 4px 1px rgba(180,200,255,0.3); }
+  .dot-white .legend-ring { border-color: rgba(200,215,255,0.15); transform: scale(1.5); opacity: 0.4; }
 
   /* ── FAB BUTTON (bottom-right) ── */
   #fab {
@@ -198,10 +242,22 @@
 <!-- Legend -->
 <div id="legend">
   <h3>⚡ 风险预警标准</h3>
-  <div class="legend-item"><div class="legend-dot dot-red"></div><span>🔴 高危区域 (强闪烁)</span></div>
-  <div class="legend-item"><div class="legend-dot dot-orange"></div><span>🟠 中度预警 (中度闪烁)</span></div>
-  <div class="legend-item"><div class="legend-dot dot-yellow"></div><span>🟡 轻度风险 (微弱闪烁)</span></div>
-  <div class="legend-item"><div class="legend-dot dot-white"></div><span>⚪ 数据稀少 (静止微光)</span></div>
+  <div class="legend-item">
+    <div class="legend-dot-wrap dot-red"><div class="legend-ring"></div><div class="legend-dot"></div></div>
+    <span>高危区域</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot-wrap dot-orange"><div class="legend-ring"></div><div class="legend-dot"></div></div>
+    <span>中度预警</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot-wrap dot-yellow"><div class="legend-ring"></div><div class="legend-dot"></div></div>
+    <span>轻度风险</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot-wrap dot-white"><div class="legend-ring"></div><div class="legend-dot"></div></div>
+    <span>数据稀少</span>
+  </div>
 </div>
 
 <!-- FAB -->
@@ -459,28 +515,43 @@ async function initGlobe() {
     requestAnimationFrame(animate);
     time = ts * 0.001;
 
-    // Update point colors for blinking effect
-    if (ts - lastBlink > 80) {
+    // Update point colors for blinking effect — each risk level has distinct character
+    if (ts - lastBlink > 60) {
       lastBlink = ts;
       const updated = hotData.map(d => {
         const risk = getRiskLevel(d.count);
-        let brightness = 1;
+        let brightness, alpha, sizeMultiplier;
+        const phase = d.lat * 0.13 + d.lng * 0.07; // unique phase per city
+
         if (risk === 'high') {
-          brightness = 0.4 + 0.6 * Math.abs(Math.sin(time * 3.8 + d.lat));
+          // Hard staccato flash: snaps between full bright and near-dark
+          const raw = Math.sin(time * 7.5 + phase);
+          brightness = raw > 0.1 ? 1.0 : 0.05;
+          alpha      = raw > 0.1 ? 1.0 : 0.08;
+          sizeMultiplier = raw > 0.1 ? 1.4 : 0.6;
         } else if (risk === 'medium') {
-          brightness = 0.55 + 0.45 * Math.abs(Math.sin(time * 2.2 + d.lng * 0.05));
+          // Smooth rhythmic pulse, moderate dim
+          const raw = Math.sin(time * 3.2 + phase);
+          brightness = 0.3 + 0.7 * ((raw + 1) / 2);
+          alpha      = 0.25 + 0.75 * ((raw + 1) / 2);
+          sizeMultiplier = 0.9 + 0.3 * ((raw + 1) / 2);
         } else if (risk === 'low') {
-          brightness = 0.7 + 0.3 * Math.abs(Math.sin(time * 1.1 + d.lat * 0.07));
+          // Slow breathe, never fully dims
+          const raw = Math.sin(time * 1.4 + phase);
+          brightness = 0.55 + 0.45 * ((raw + 1) / 2);
+          alpha      = 0.45 + 0.45 * ((raw + 1) / 2);
+          sizeMultiplier = 0.95 + 0.1 * ((raw + 1) / 2);
         } else {
-          brightness = 0.35 + 0.15 * Math.abs(Math.sin(time * 0.5));
+          // Minimal: barely perceptible very slow glow
+          brightness = 0.3 + 0.1 * Math.sin(time * 0.5 + phase);
+          alpha      = 0.25 + 0.1 * Math.sin(time * 0.5 + phase);
+          sizeMultiplier = 1.0;
         }
 
-        const baseColor = getRiskColor(d.count);
-        const alpha = 0.3 + 0.7 * brightness;
         return {
           ...d,
-          color: applyBrightness(baseColor, brightness, alpha),
-          size: getPointSize(d.count) * (0.85 + 0.15 * brightness),
+          color: applyBrightness(getRiskColor(d.count), brightness, alpha),
+          size: getPointSize(d.count) * sizeMultiplier,
           risk
         };
       });
