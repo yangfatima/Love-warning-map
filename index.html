@@ -293,12 +293,6 @@
   <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
 </div>
 
-<!-- Lang Switcher -->
-<div id="lang-switcher">
-  <button class="lang-btn active" id="btn-zh" onclick="setLang('zh')">中文</button>
-  <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
-</div>
-
 <!-- FAB -->
 <button id="fab">✨ 分享你的恋爱避雷坐标</button>
 
@@ -436,41 +430,57 @@ INITIAL_DATA.forEach(d => {
 function cityName(d) { return currentLang === 'en' ? d.cityEn : d.city; }
 function countryName(d) { return currentLang === 'en' ? d.countryEn : d.country; }
 
-// Build sorted unique country list for current lang
-function getCountryList() {
+// Build sorted unique country list for given lang
+function getCountryList(lang) {
+  lang = lang || currentLang;
   const seen = new Set();
   return INITIAL_DATA
     .map(d => ({ zh: d.country, en: d.countryEn }))
     .filter(c => { if (seen.has(c.zh)) return false; seen.add(c.zh); return true; })
-    .sort((a,b) => (currentLang === 'en' ? a.en.localeCompare(b.en) : a.zh.localeCompare(b.zh)));
+    .sort((a,b) => (lang === 'en' ? a.en.localeCompare(b.en) : a.zh.localeCompare(b.zh)));
 }
 
 // Populate / refresh country <select>
+// ── COUNTRY / CITY SELECT HELPERS ──
+// We store the selected country's zh-key in a JS variable (not dataset)
+// so it survives innerHTML wipes during lang switch.
+let _selectedCountryZh = '';
+
 function refreshCountrySelect() {
   const sel = document.getElementById('country-select');
-  const prevZhVal = sel.dataset.zhVal || '';  // remember zh key across lang switch
+  // Save current zh-key selection before wiping
+  // (on first call _selectedCountryZh is '' which is correct)
   sel.innerHTML = '';
+
+  const lang = currentLang; // capture at call time — always correct since setLang sets it first
   const ph = document.createElement('option');
-  ph.value = ''; ph.textContent = TRANSLATIONS[currentLang].countryPlaceholder;
+  ph.value = '';
+  ph.textContent = TRANSLATIONS[lang].countryPlaceholder;
   sel.appendChild(ph);
-  getCountryList().forEach(c => {
+
+  getCountryList(lang).forEach(c => {
     const opt = document.createElement('option');
-    opt.value = c.zh;                                  // always store zh key
-    opt.textContent = currentLang === 'en' ? c.en : c.zh;
+    opt.value = c.zh;  // internal key is always zh
+    opt.textContent = lang === 'en' ? c.en : c.zh;
     sel.appendChild(opt);
   });
-  if (prevZhVal) sel.value = prevZhVal;
-  refreshCitySuggestions(prevZhVal);
+
+  // Restore previous selection if any
+  if (_selectedCountryZh) {
+    sel.value = _selectedCountryZh;
+  }
+  refreshCitySuggestions(lang);
 }
 
-// Populate / refresh city <datalist> based on selected country (zh key)
-function refreshCitySuggestions(zhCountry) {
+// Populate city <datalist> for current _selectedCountryZh
+function refreshCitySuggestions(lang) {
+  lang = lang || currentLang;
   const dl = document.getElementById('city-suggestions');
   dl.innerHTML = '';
-  const cities = CITIES_BY_COUNTRY_ZH[zhCountry] || [];
+  const cities = CITIES_BY_COUNTRY_ZH[_selectedCountryZh] || [];
   cities.forEach(c => {
     const opt = document.createElement('option');
-    opt.value = currentLang === 'en' ? c.cityEn : c.city;
+    opt.value = lang === 'en' ? c.cityEn : c.city;
     dl.appendChild(opt);
   });
 }
@@ -726,9 +736,8 @@ const citySuggestions = document.getElementById('city-suggestions');
 refreshCountrySelect();
 
 countrySelect.addEventListener('change', () => {
-  const zhCountry = countrySelect.value;
-  countrySelect.dataset.zhVal = zhCountry;
-  refreshCitySuggestions(zhCountry);
+  _selectedCountryZh = countrySelect.value;
+  refreshCitySuggestions(currentLang);
   cityInput.value = '';
 });
 
